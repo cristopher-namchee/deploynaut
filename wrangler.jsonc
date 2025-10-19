@@ -7,10 +7,6 @@
 	"name": "deploynaut",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-10-11",
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./public"
-	},
 	"observability": {
 		"enabled": true
 	}
