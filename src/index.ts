@@ -4,6 +4,8 @@ import type { Env } from "./types";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
+const url = "https://script.google.com/macros/s/AKfycbyObK1A9rcv0OOIMF2XnEykQo8MHUkK3iHPekqxQraTCr0dXj9uN17gRo2jzpFrSUESOQ/exec";
+
 function fetchDeploymentSchedule() {
   const today = new Date();
 }
