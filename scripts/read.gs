@@ -1,6 +1,20 @@
 const shiftSheet = '18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo';
 
-const DummyColumn = 7;
+function isValidDate(dateLike) {
+  return !isNaN(new Date(dateLike).getTime());
+}
+
+function validateParams(params) {
+  const date = new Date(params.date[0]);
+
+  if (!isValidDate(date)) {
+    throw new Error('Date is not a valid date');
+  }
+
+  return {
+    date,
+  };
+}
 
 function formatDate(date) {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -22,8 +36,10 @@ function extractEmail(sheet, row, column) {
   // get the range
   const range = sheet.getRange(row, column);
 
+  const dummyColumn = sheet.getLastColumn() + 2;
+
   // write email formula to dummy column
-  const formulaCell = sheet.getRange(row, DummyColumn);
+  const formulaCell = sheet.getRange(row, dummyColumn);
   formulaCell.setFormula(`=${columnToLetter(column)}${row}.email`);
 
   // wait for the Spreadsheet app to finish calculating
@@ -56,8 +72,18 @@ function getDeploymentPIC(date) {
   ];
 }
 
-function main() {
-  const today = new Date('2025-10-27');
+function doGet(e) {
+  try {
+    const params = validateParams(e.parameters);
 
-  console.log(getDeploymentPIC(today));
+    const pics = getDeploymentPIC(params.date);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'success', data: pics }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: `Script failed to execute due to: ${err.message}` }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
