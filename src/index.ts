@@ -4,13 +4,10 @@ import type { Env } from "./types";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
-function fetchDeploymentSchedule() {
-  const today = new Date();
-}
-
 export default {
   fetch: app.fetch,
-  scheduler: async (_: ScheduledController, env: Env, ctx: ExecutionContext) => {
+  scheduler: async (ctrl: ScheduledController, env: Env, ctx: ExecutionContext) => {
+    ctrl.cron
     ctx.waitUntil(Promise.resolve(5));
   }
 }
