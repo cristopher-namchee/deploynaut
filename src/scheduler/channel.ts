@@ -1,6 +1,7 @@
 import type { Env } from '../types';
 
-export default {
-  schedule: '30 8 * * 2-6',
-  handler: (env: Env) => {},
-};
+export async function sendMessageToChannel(env: Env) {
+  const today = new Date();
+
+  const schedule = await getSchedule(env, today);
+}
