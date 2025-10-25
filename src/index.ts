@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
+import { sendMessageToChannel } from './scheduler/channel';
 import { sendMessageToPICs } from './scheduler/personal';
 import type { Env } from './types';
 
-const schedules = {
+const schedules: Record<string, (env: Env) => Promise<void>> = {
   '0 5 * * 2-6': sendMessageToPICs,
   '30 8 * * 2-6': sendMessageToChannel,
 };
@@ -16,7 +17,10 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ) => {
-    ctrl.cron;
-    ctx.waitUntil(Promise.resolve(5));
+    const task = schedules[ctrl.cron];
+
+    if (task) {
+      ctx.waitUntil(task(env));
+    }
   },
 };

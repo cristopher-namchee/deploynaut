@@ -6,7 +6,7 @@ export async function sendMessageToChannel(env: Env) {
 
   const schedule = await getSchedule(env, today);
 
-  const blocks = [
+  const blocks: unknown[] = [
     {
       type: 'header',
       text: {
@@ -81,19 +81,96 @@ export async function sendMessageToChannel(env: Env) {
 
   if (schedule) {
     const pics = await Promise.all(
-      schedule.slice(1).map(async (pic) => {
-        const userId = await userLookup(env, pic);
-
-        return userId;
-      }),
+      schedule.slice(1).map((pic) => userLookup(env, pic)),
     );
 
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `🧑‍💻 *Today's PIC:* ${pics.map((pic) => `<@${pic}>`).join(' ')}`,
+    blocks.push(
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `🧑‍💻 *Today's PIC:* `,
+        },
       },
+      {
+        type: 'table',
+        rows: [
+          [
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: 'PM',
+                      style: { bold: true },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: 'Engineer',
+                      style: { bold: true },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          [
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'user',
+                      user_id: pics[0],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'user',
+                      user_id: pics[1],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        ],
+      },
+    );
+
+    await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        channel: env.SLACK_CHANNEL,
+        blocks,
+      }),
     });
   }
 }
