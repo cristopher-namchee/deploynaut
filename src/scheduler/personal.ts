@@ -11,7 +11,7 @@ export async function sendMessageToPICs(env: Env) {
       type: 'header',
       text: {
         type: 'plain_text',
-        text: '🔔 Deployment Reminder',
+        text: '🔔 Deployment PIC Reminder',
         emoji: true,
       },
     },
@@ -76,6 +76,7 @@ export async function sendMessageToPICs(env: Env) {
         },
       ],
     },
+    { type: 'divider' },
     {
       type: 'section',
       text: {
@@ -86,8 +87,9 @@ export async function sendMessageToPICs(env: Env) {
   ];
 
   if (schedule) {
+    // exclude daily bug PIC for now.
     await Promise.all(
-      schedule.map(async (pic) => {
+      schedule.slice(1).map(async (pic) => {
         const response = await fetch(
           'https://slack.com/api/users.lookupByEmail',
           {
