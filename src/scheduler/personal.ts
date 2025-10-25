@@ -1,4 +1,4 @@
-import { getSchedule } from '../gscript';
+import { getSchedule, userLookup } from '../lib';
 import type { Env } from '../types';
 
 export async function sendMessageToPICs(env: Env) {
@@ -49,8 +49,13 @@ export async function sendMessageToPICs(env: Env) {
               type: 'rich_text_section',
               elements: [
                 {
-                  type: 'mrkdwn',
-                  text: 'Read the [Release SOP](https://docs.google.com/document/d/1bV0_dW_VRaQsJ74rwFdC9J4jejWWk95x57lNOaPSOeI/edit?tab=t.0#heading=h.lgn9p612t3df)',
+                  type: 'text',
+                  text: 'Read the ',
+                },
+                {
+                  type: 'link',
+                  text: 'Release SOP',
+                  url: 'https://docs.google.com/document/d/1bV0_dW_VRaQsJ74rwFdC9J4jejWWk95x57lNOaPSOeI/edit?tab=t.0#heading=h.lgn9p612t3df',
                 },
               ],
             },
@@ -59,7 +64,16 @@ export async function sendMessageToPICs(env: Env) {
               elements: [
                 {
                   type: 'text',
-                  text: 'Ensure all changes across the stack have been successfully deployed to staging.',
+                  text: 'Ensure that all latest changes have been ',
+                },
+                {
+                  type: 'link',
+                  text: 'successfully deployed',
+                  url: 'https://github.com/GDP-ADMIN/glchat/commits/main/',
+                },
+                {
+                  type: 'text',
+                  text: ' on staging',
                 },
               ],
             },
@@ -68,7 +82,7 @@ export async function sendMessageToPICs(env: Env) {
               elements: [
                 {
                   type: 'text',
-                  text: 'Re-confirm all changes to the release to all GLChat development team.',
+                  text: 'Re-confirm all changes to the release to all GLChat development team',
                 },
               ],
             },
@@ -90,25 +104,7 @@ export async function sendMessageToPICs(env: Env) {
     // exclude daily bug PIC for now.
     await Promise.all(
       schedule.slice(1).map(async (pic) => {
-        const response = await fetch(
-          'https://slack.com/api/users.lookupByEmail',
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({ email: pic }),
-          },
-        );
-
-        if (!response) {
-          return console.error(
-            `Cannot find user ${pic}. Please check the deployment sheet.`,
-          );
-        }
-
-        const { id } = (await response.json()) as { id: string };
+        const userId = await userLookup(env, pic);
 
         await fetch('https://slack.com/api/chat.postMessage', {
           method: 'POST',
@@ -117,7 +113,7 @@ export async function sendMessageToPICs(env: Env) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            channel: id,
+            channel: userId,
             blocks,
           }),
         });

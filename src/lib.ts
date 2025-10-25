@@ -40,3 +40,24 @@ export async function getSchedule(env: Env, date: Date) {
     console.error('Failed to fetch schedule due to the following error', err);
   }
 }
+
+export async function userLookup(env: Env, email: string) {
+  const response = await fetch('https://slack.com/api/users.lookupByEmail', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ email }),
+  });
+
+  if (!response) {
+    return console.error(
+      `Cannot find user ${email}. Please check the deployment sheet.`,
+    );
+  }
+
+  const { id } = (await response.json()) as { id: string };
+
+  return id;
+}
