@@ -9,6 +9,12 @@
 	"compatibility_date": "2025-10-11",
 	"observability": {
 		"enabled": true
+	},
+	"triggers": {
+		"crons": [
+			"0 5 * * 2-6", // personal message
+			"30 8 * * 2-6" // channel message
+		]
 	}
 	/**
 	 * Smart Placement

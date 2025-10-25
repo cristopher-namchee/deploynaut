@@ -1,9 +1,10 @@
-import type { Env } from "../types";
+import type { Env } from '../types';
 
 function fetchDeploymentSchedule() {
   const today = new Date();
 }
 
-export function sendReminderToPIC(env: Env) {
-    
-}
+export default {
+  schedule: '0 5 * * 2-6',
+  handler: (env: Env) => {},
+};
