@@ -24,7 +24,7 @@ export async function getSchedule(env: Env, date: Date) {
   baseUrl.search = params.toString();
 
   try {
-    const response = await fetch(env.SCRIPT_URL);
+    const response = await fetch(baseUrl);
 
     if (!response.ok) {
       throw new Error(`AppsScript returned ${response.status}`);
