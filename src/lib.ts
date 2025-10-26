@@ -57,7 +57,6 @@ export async function userLookup(env: Env, email: string) {
     );
   }
 
-  const { id } = (await response.json()) as { id: string };
-
-  return id;
+  const { user } = (await response.json()) as { user: { id: string } };
+  return user.id;
 }
