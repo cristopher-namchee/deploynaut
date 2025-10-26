@@ -19,7 +19,7 @@ export async function sendMessageToChannel(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `<@S09E9T20CQ0|bocah-assemble>, it's 30 minutes to GLChat Daily Release cutoff time.`,
+        text: `<!subteam^S09E9T20CQ0|bocah-assemble>, it's 30 minutes to GLChat Daily Release cutoff time.`,
       },
     },
     { type: 'divider' },
