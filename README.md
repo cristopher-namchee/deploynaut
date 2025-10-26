@@ -1,21 +1,18 @@
-```txt
-npm install
-npm run dev
-```
+# Deploynaut
 
-```txt
-npm run deploy
-```
+Deploynaut is a Slack bot that post reminders for GLChat deployment and bug management.
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+## Features
 
-```txt
-npm run cf-typegen
-```
+1. Reminds each PIC by sending the personal messages with SOP
+2. Reminds main channel on deployment guidelines
+3. (Draft) Automate GLChat daily bug report
 
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
+## Roadmap
 
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+- [ ] GLChat daily bug report
+  - [ ] Find out how the document is created
+
+## License
+
+This project is licensed under the [Unlicense](./LICENSE)
