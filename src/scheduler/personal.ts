@@ -34,7 +34,7 @@ export async function sendMessageToPICs(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `To ensure today's deployment go without a hitch, here's some steps that you can take to prepare for the deployment:`,
+        text: `To ensure today's deployment goes smoothly, here are some steps that you can take to prepare for the deployment:`,
       },
     },
     {
@@ -73,7 +73,7 @@ export async function sendMessageToPICs(env: Env) {
                 },
                 {
                   type: 'text',
-                  text: ' on staging',
+                  text: ' to staging environment',
                 },
               ],
             },
@@ -82,7 +82,7 @@ export async function sendMessageToPICs(env: Env) {
               elements: [
                 {
                   type: 'text',
-                  text: 'Re-confirm all changes to the release to all GLChat development team',
+                  text: 'Reconfirm all changes to the release to all GLChat development team',
                 },
               ],
             },
