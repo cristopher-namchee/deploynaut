@@ -69,6 +69,8 @@ function getDeploymentPIC(date) {
     extractEmail(sheet, targetRow, 2),
     extractEmail(sheet, targetRow, 3),
     extractEmail(sheet, targetRow, 4),
+    extractEmail(sheet, targetRow, 5),
+    extractEmail(sheet, targetRow, 6),
   ].filter(email => email !== '#REF!');
 }
 
