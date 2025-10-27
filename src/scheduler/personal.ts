@@ -86,6 +86,34 @@ export async function sendMessageToPICs(env: Env) {
                 },
               ],
             },
+            {
+              type: 'rich_text_section',
+              elements: [
+                {
+                  type: 'text',
+                  text: 'Stands-by in ',
+                },
+                {
+                  type: 'channel',
+                  channel_id: 'C06D7HWF882',
+                },
+                {
+                  type: 'text',
+                  text: ' from ',
+                },
+                {
+                  type: 'text',
+                  text: ' 15:30 (GMT +7) ',
+                  style: {
+                    bold: true,
+                  },
+                },
+                {
+                  type: 'text',
+                  text: ' until the release is finished.',
+                },
+              ],
+            },
           ],
         },
       ],
