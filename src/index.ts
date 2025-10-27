@@ -12,7 +12,7 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 
 export default {
   fetch: app.fetch,
-  scheduler: async (
+  scheduled: async (
     ctrl: ScheduledController,
     env: Env,
     ctx: ExecutionContext,
