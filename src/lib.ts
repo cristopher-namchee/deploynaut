@@ -2,7 +2,7 @@ import type { Env } from './types';
 
 interface SuccessResponse {
   status: 'success';
-  data: [string, string, string];
+  data: [string, string, string, string, string];
 }
 
 interface ErrorResponse {
