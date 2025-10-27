@@ -11,7 +11,7 @@ export async function sendMessageToPICs(env: Env) {
       type: 'header',
       text: {
         type: 'plain_text',
-        text: '🔔 Deployment PIC Reminder',
+        text: '🔔 GLChat Daily Release PIC Reminder',
         emoji: true,
       },
     },
