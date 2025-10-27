@@ -86,6 +86,15 @@ export async function sendMessageToPICs(env: Env) {
                 },
               ],
             },
+            {
+              type: 'rich_text_section',
+              elements: [
+                {
+                  type: 'text',
+                  text: 'Stands-by from *15:30* until the release is finished.',
+                },
+              ],
+            },
           ],
         },
       ],
