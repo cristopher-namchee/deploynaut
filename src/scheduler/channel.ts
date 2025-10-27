@@ -11,7 +11,7 @@ export async function sendMessageToChannel(env: Env) {
       type: 'header',
       text: {
         type: 'plain_text',
-        text: '🔔 Deployment Reminder',
+        text: '🔔 GLChat Daily Release Reminder',
         emoji: true,
       },
     },
@@ -27,7 +27,7 @@ export async function sendMessageToChannel(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `✅ *Things to prepare before deployment:*`,
+        text: `✅ *Things to prepare before release:*`,
       },
     },
     {
