@@ -129,9 +129,11 @@ export async function sendMessageToPICs(env: Env) {
   ];
 
   if (schedule) {
+    const pics = [schedule[1], schedule[2], schedule[4]];
+
     // exclude daily bug PIC for now.
     await Promise.all(
-      schedule.slice(1).map(async (pic) => {
+      pics.map(async (pic) => {
         const userId = await userLookup(env, pic);
 
         await fetch('https://slack.com/api/chat.postMessage', {

@@ -81,7 +81,9 @@ export async function sendMessageToChannel(env: Env) {
 
   if (schedule) {
     const pics = await Promise.all(
-      schedule.slice(1).map((pic) => userLookup(env, pic)),
+      [schedule[1], schedule[2], schedule[4]].map((pic) =>
+        userLookup(env, pic),
+      ),
     );
 
     blocks.push(
@@ -126,6 +128,21 @@ export async function sendMessageToChannel(env: Env) {
                 },
               ],
             },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: 'QA',
+                      style: { bold: true },
+                    },
+                  ],
+                },
+              ],
+            },
           ],
           [
             {
@@ -151,6 +168,20 @@ export async function sendMessageToChannel(env: Env) {
                     {
                       type: 'user',
                       user_id: pics[1],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'user',
+                      user_id: pics[2],
                     },
                   ],
                 },
