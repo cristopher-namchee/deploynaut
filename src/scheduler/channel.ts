@@ -82,7 +82,7 @@ export async function sendMessageToChannel(env: Env) {
   if (schedule) {
     const pics = await Promise.all(
       [schedule[1], schedule[2], schedule[4]].map((pic) =>
-        userLookup(env, pic),
+        userLookup(env, pic.email),
       ),
     );
 
@@ -143,6 +143,21 @@ export async function sendMessageToChannel(env: Env) {
                 },
               ],
             },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: 'Infra',
+                      style: { bold: true },
+                    },
+                  ],
+                },
+              ],
+            },
           ],
           [
             {
@@ -182,6 +197,21 @@ export async function sendMessageToChannel(env: Env) {
                     {
                       type: 'user',
                       user_id: pics[2],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'link',
+                      text: schedule[3].name,
+                      url: 'https://mail.google.com/chat/u/0/#chat/space/AAAA_HPfXJU',
                     },
                   ],
                 },
