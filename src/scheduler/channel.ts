@@ -136,7 +136,7 @@ export async function sendMessageToChannel(env: Env) {
                   elements: [
                     {
                       type: 'text',
-                      text: 'Infra',
+                      text: 'QA',
                       style: { bold: true },
                     },
                   ],
@@ -151,7 +151,7 @@ export async function sendMessageToChannel(env: Env) {
                   elements: [
                     {
                       type: 'text',
-                      text: 'QA',
+                      text: 'Infra',
                       style: { bold: true },
                     },
                   ],
@@ -196,7 +196,7 @@ export async function sendMessageToChannel(env: Env) {
                   elements: [
                     {
                       type: 'user',
-                      user_id: pics[1],
+                      user_id: pics[2],
                     },
                   ],
                 },
@@ -209,8 +209,9 @@ export async function sendMessageToChannel(env: Env) {
                   type: 'rich_text_section',
                   elements: [
                     {
-                      type: 'user',
-                      user_id: pics[2],
+                      type: 'link',
+                      text: schedule[3].name,
+                      link: 'https://mail.google.com/chat/u/0/#chat/space/AAAA_HPfXJU',
                     },
                   ],
                 },
