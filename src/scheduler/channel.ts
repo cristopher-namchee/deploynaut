@@ -211,7 +211,7 @@ export async function sendMessageToChannel(env: Env) {
                     {
                       type: 'link',
                       text: schedule[3].name,
-                      link: 'https://mail.google.com/chat/u/0/#chat/space/AAAA_HPfXJU',
+                      url: 'https://mail.google.com/chat/u/0/#chat/space/AAAA_HPfXJU',
                     },
                   ],
                 },
