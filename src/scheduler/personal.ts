@@ -134,7 +134,7 @@ export async function sendMessageToPICs(env: Env) {
     // exclude daily bug PIC for now.
     await Promise.all(
       pics.map(async (pic) => {
-        const userId = await userLookup(env, pic);
+        const userId = await userLookup(env, pic.email);
 
         await fetch('https://slack.com/api/chat.postMessage', {
           method: 'POST',

@@ -1,8 +1,13 @@
 import type { Env } from './types';
 
+interface Employee {
+  name: string;
+  email: string;
+}
+
 interface SuccessResponse {
   status: 'success';
-  data: [string, string, string, string, string];
+  data: [Employee, Employee, Employee, Employee, Employee];
 }
 
 interface ErrorResponse {
