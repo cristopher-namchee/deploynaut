@@ -99,7 +99,15 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `Below are the list of currently active bugs in GLChat based on [issues in the repository](https://github.com/GDP-ADMIN/glchat/issues)`,
+        text: `Below are the list of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${new Date().toLocaleDateString(
+          'en-GB',
+          {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          },
+        )}*.`,
       },
     },
     {
@@ -206,6 +214,55 @@ export async function sendActiveBugReminder(env: Env) {
             },
           ];
         }),
+      ],
+    },
+    {
+      type: 'divider',
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `✅ *Things to do as a PIC:*`,
+      },
+    },
+    {
+      type: 'rich_text',
+      elements: [
+        {
+          type: 'rich_text_list',
+          style: 'bullet',
+          indent: 0,
+          elements: [
+            {
+              type: 'rich_text_section',
+              elements: [
+                {
+                  type: 'text',
+                  text: "Investigate the issue that you've been assigned to.",
+                },
+              ],
+            },
+            {
+              type: 'rich_text_section',
+              elements: [
+                {
+                  type: 'text',
+                  text: 'Provide a status update in the issue page.',
+                },
+              ],
+            },
+            {
+              type: 'rich_text_section',
+              elements: [
+                {
+                  type: 'text',
+                  text: "If you can't provide a status update to the issue, please state the reason in this thread.",
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
   ];
