@@ -14,6 +14,7 @@ export interface GithubUser {
 export interface GitHubIssue {
   number: number;
   title: string;
+  html_url: string;
   assignees?: {
     id: number;
     url: string;

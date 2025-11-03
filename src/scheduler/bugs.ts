@@ -1,3 +1,4 @@
+import { userLookup } from '../lib';
 import type { Env, GitHubIssue, GithubUser } from '../types';
 
 const GLCHAT_METADATA = {
@@ -16,7 +17,7 @@ export async function sendActiveBugReminder(env: Env) {
   );
   url.search = params.toString();
 
-  const bugs = await fetch(url, {
+  const bugsRequest = await fetch(url, {
     method: 'GET',
     headers: {
       Accept: 'application/vnd.github+json',
@@ -25,19 +26,24 @@ export async function sendActiveBugReminder(env: Env) {
     },
   });
 
-  if (!bugs.ok) {
+  if (!bugsRequest.ok) {
     throw new Error(
-      `Failed to fetch bug list. Response returned ${bugs.status}`,
+      `Failed to fetch bug list. Response returned ${bugsRequest.status}`,
     );
   }
 
-  const issues = (await bugs.json()) as GitHubIssue[];
-  const issuesWithAssignees = await Promise.all(
-    issues.map(async (issue) => {
+  const bugs = (await bugsRequest.json()) as GitHubIssue[];
+  const bugsWithAssignees = await Promise.all(
+    bugs.map(async (issue) => {
       const users = issue.assignees;
 
       if (!users?.length) {
-        return [];
+        return {
+          title: issue.title,
+          number: issue.number,
+          url: issue.html_url,
+          assignees: [],
+        };
       }
 
       const assigneeData = await Promise.all(
@@ -57,19 +63,143 @@ export async function sendActiveBugReminder(env: Env) {
             );
           }
 
-          return userResponse.json() as Promise<GithubUser>;
+          return userData;
+        }),
+      );
+
+      const slackAssignees = await Promise.all(
+        assigneeData.map(async ({ email }) => {
+          if (!email) {
+            return null;
+          }
+
+          return userLookup(env, email);
         }),
       );
 
       return {
         title: issue.title,
         number: issue.number,
-        assignees: assigneeData
-          .map((assignee) => assignee.email)
-          .filter(Boolean),
+        url: issue.html_url,
+        assignees: slackAssignees.filter(Boolean),
       };
     }),
   );
 
-  console.log(issuesWithAssignees);
+  const blocks = [
+    {
+      type: 'header',
+      text: {
+        type: 'plain_text',
+        text: '🐛 GLChat Active Bug List',
+        emoji: true,
+      },
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `Below are the list of currently active bugs in GLChat based on [issues in the repository](https://github.com/GDP-ADMIN/glchat/issues)`,
+      },
+    },
+    {
+      type: 'table',
+      rows: [
+        [
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: 'Issue Number',
+                    style: { bold: true },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: 'Title',
+                    style: { bold: true },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: 'Assignee(s)',
+                    style: { bold: true },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        ...bugsWithAssignees.map((issue) => {
+          return [
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'link',
+                      text: issue.number.toString(),
+                      url: issue.url,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: issue.title,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: issue.assignees.map((assignee) => ({
+                    type: 'user',
+                    user_id: assignee,
+                  })),
+                },
+              ],
+            },
+          ];
+        }),
+      ],
+    },
+  ];
+
+  console.log(JSON.stringify(blocks, null, 2));
 }
