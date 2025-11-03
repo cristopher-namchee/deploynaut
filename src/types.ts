@@ -5,7 +5,15 @@ export interface Env {
   GITHUB_TOKEN: string;
 }
 
+export interface GithubUser {
+  login: string;
+  name: string;
+  email: string | null;
+}
+
 export interface GitHubIssue {
+  number: number;
+  title: string;
   assignees?: {
     id: number;
     url: string;

@@ -1,4 +1,4 @@
-import type { Env, GitHubIssue } from '../types';
+import type { Env, GitHubIssue, GithubUser } from '../types';
 
 const GLCHAT_METADATA = {
   owner: 'GDP-ADMIN',
@@ -26,27 +26,23 @@ export async function sendActiveBugReminder(env: Env) {
   });
 
   if (!bugs.ok) {
-    const body = (await bugs.json()) as GitHubIssue[];
-
-    console.log(body);
     throw new Error(
       `Failed to fetch bug list. Response returned ${bugs.status}`,
     );
   }
 
-  const body = (await bugs.json()) as GitHubIssue[];
-
-  const emails = await Promise.all(
-    body.map(async (b) => {
-      const users = b.assignees;
+  const issues = (await bugs.json()) as GitHubIssue[];
+  const issuesWithAssignees = await Promise.all(
+    issues.map(async (issue) => {
+      const users = issue.assignees;
 
       if (!users?.length) {
         return [];
       }
 
-      const response = await Promise.all(
+      const assigneeData = await Promise.all(
         users.map(async (user) => {
-          const response = await fetch(user.url, {
+          const userResponse = await fetch(user.url, {
             headers: {
               Accept: 'application/vnd.github+json',
               Authorization: `Bearer ${env.GITHUB_TOKEN}`,
@@ -54,13 +50,26 @@ export async function sendActiveBugReminder(env: Env) {
             },
           });
 
-          return response.json();
+          const userData = (await userResponse.json()) as GithubUser;
+          if (!userData.email) {
+            console.log(
+              `User ${userData.login} - ${userData.name} hasn't made their email public yet.`,
+            );
+          }
+
+          return userResponse.json() as Promise<GithubUser>;
         }),
       );
 
-      return response;
+      return {
+        title: issue.title,
+        number: issue.number,
+        assignees: assigneeData
+          .map((assignee) => assignee.email)
+          .filter(Boolean),
+      };
     }),
   );
 
-  console.log(emails);
+  console.log(issuesWithAssignees);
 }
