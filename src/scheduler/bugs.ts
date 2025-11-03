@@ -1,4 +1,4 @@
-import { userLookup } from '../lib';
+import { getSchedule, userLookup } from '../lib';
 import type { Env, GitHubIssue, GithubUser } from '../types';
 
 const GLCHAT_METADATA = {
@@ -7,6 +7,15 @@ const GLCHAT_METADATA = {
 };
 
 export async function sendActiveBugReminder(env: Env) {
+  const today = new Date();
+
+  const pics = await getSchedule(env, today);
+  if (!pics) {
+    throw new Error('Failed to get schedule data.');
+  }
+
+  const dailyBugPic = await userLookup(env, pics[0].email);
+
   const params = new URLSearchParams();
   params.append('labels', 'bug');
   params.append('state', 'open');
@@ -99,7 +108,7 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `Below are the list of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${new Date().toLocaleDateString(
+        text: `Below are the list of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${today.toLocaleDateString(
           'en-GB',
           {
             weekday: 'long',
@@ -264,6 +273,23 @@ export async function sendActiveBugReminder(env: Env) {
           ],
         },
       ],
+    },
+    {
+      type: 'divider',
+    },
+    {
+      type: 'rich_text',
+      elements: [
+        {
+          type: 'rich_text_section',
+          elements: [
+            {
+              type: 'text',
+              text: 
+            }
+          ]
+        }
+      ]
     },
   ];
 
