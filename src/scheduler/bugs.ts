@@ -188,10 +188,19 @@ export async function sendActiveBugReminder(env: Env) {
               elements: [
                 {
                   type: 'rich_text_section',
-                  elements: issue.assignees.map((assignee) => ({
-                    type: 'user',
-                    user_id: assignee,
-                  })),
+                  elements:
+                    issue.assignees.length === 0
+                      ? [
+                          {
+                            type: 'text',
+                            text: '⚠️',
+                            emoji: true,
+                          },
+                        ]
+                      : issue.assignees.map((assignee) => ({
+                          type: 'user',
+                          user_id: assignee,
+                        })),
                 },
               ],
             },
