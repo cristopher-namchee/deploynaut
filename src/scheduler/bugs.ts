@@ -201,9 +201,22 @@ export async function sendActiveBugReminder(env: Env) {
           },
         ],
         ...bugsWithAssignees.map((issue) => {
+          let typeSection = 'Manual report';
+          let actualTitle = issue.title;
+
           const firstLine = issue.title.indexOf('-');
-          const typeSection = issue.title.slice(0, firstLine - 1);
-          const actualTitle = issue.title.slice(firstLine + 2);
+
+          if (firstLine !== -1) {
+            const probablyType = issue.title.slice(0, firstLine - 1);
+
+            if (probablyType.startsWith('[Gloria Feedback]')) {
+              typeSection = probablyType
+                .replace('[Gloria Feedback]', '')
+                .replace(/issue$/, '')
+                .trim();
+              actualTitle = issue.title.slice(firstLine + 2);
+            }
+          }
 
           const issueAge = Math.round(
             (today.getTime() - new Date(issue.created_at ?? '').getTime()) /
@@ -234,10 +247,7 @@ export async function sendActiveBugReminder(env: Env) {
                   elements: [
                     {
                       type: 'text',
-                      text: typeSection
-                        .replace('[Gloria Feedback]', '')
-                        .replace(/issue$/, '')
-                        .trim(),
+                      text: typeSection,
                     },
                   ],
                 },

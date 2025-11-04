@@ -8,7 +8,7 @@ import type { Env } from './types';
 const schedules: Record<string, (env: Env) => Promise<void>> = {
   '0 5 * * 2-6': sendMessageToPICs,
   '30 8 * * 2-6': sendMessageToChannel,
-  '0 3 * * 2-6': sendActiveBugReminder,
+  '0 3 * * *': sendActiveBugReminder,
 };
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
