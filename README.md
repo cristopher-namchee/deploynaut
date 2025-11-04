@@ -10,8 +10,10 @@ Deploynaut is a Slack bot that post reminders for GLChat deployment and bug mana
 
 ## Roadmap
 
-- [ ] GLChat daily bug report
-  - [ ] Find out how the document is created
+- [x] GLChat daily bug report
+  - [x] Find out how the document is created
+  - [x] Write Slack Thread about daily bug report
+  - [ ] Actually update daily bug sheet
 
 ## License
 
