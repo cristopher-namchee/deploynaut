@@ -146,6 +146,21 @@ export async function sendActiveBugReminder(env: Env) {
                 elements: [
                   {
                     type: 'text',
+                    text: 'Type',
+                    style: { bold: true },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
                     text: 'Title',
                     style: { bold: true },
                   },
@@ -205,6 +220,20 @@ export async function sendActiveBugReminder(env: Env) {
               elements: [
                 {
                   type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: issue.title,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
                   elements:
                     issue.assignees.length === 0
                       ? [
@@ -232,7 +261,7 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `✅ *Things to do as a PIC:*`,
+        text: `✅ *Things to do as an assignee:*`,
       },
     },
     {
@@ -278,18 +307,26 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'divider',
     },
     {
+      type: 'header',
+      text: {
+        type: 'plain_text',
+        text: '🐛 PIC for Daily Bug Report',
+        emoji: true,
+      },
+    },
+    {
       type: 'rich_text',
       elements: [
         {
           type: 'rich_text_section',
           elements: [
             {
-              type: 'text',
-              text: 
-            }
-          ]
-        }
-      ]
+              type: 'user',
+              user_id: dailyBugPic,
+            },
+          ],
+        },
+      ],
     },
   ];
 
