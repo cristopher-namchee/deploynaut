@@ -90,6 +90,7 @@ export async function sendActiveBugReminder(env: Env) {
         title: issue.title,
         number: issue.number,
         url: issue.html_url,
+        created_at: issue.created_at,
         assignees: slackAssignees.filter(Boolean),
       };
     }),
@@ -176,6 +177,21 @@ export async function sendActiveBugReminder(env: Env) {
                 elements: [
                   {
                     type: 'text',
+                    text: 'Age',
+                    style: { bold: true },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
                     text: 'Assignee(s)',
                     style: { bold: true },
                   },
@@ -185,6 +201,15 @@ export async function sendActiveBugReminder(env: Env) {
           },
         ],
         ...bugsWithAssignees.map((issue) => {
+          const firstLine = issue.title.indexOf('-');
+          const typeSection = issue.title.slice(0, firstLine - 1);
+          const actualTitle = issue.title.slice(firstLine + 2);
+
+          const issueAge = Math.round(
+            (today.getTime() - new Date(issue.created_at ?? '').getTime()) /
+              (1000 * 60 * 60 * 24),
+          );
+
           return [
             {
               type: 'rich_text',
@@ -209,7 +234,10 @@ export async function sendActiveBugReminder(env: Env) {
                   elements: [
                     {
                       type: 'text',
-                      text: issue.title,
+                      text: typeSection
+                        .replace('[Gloria Feedback]', '')
+                        .replace(/issue$/, '')
+                        .trim(),
                     },
                   ],
                 },
@@ -223,7 +251,21 @@ export async function sendActiveBugReminder(env: Env) {
                   elements: [
                     {
                       type: 'text',
-                      text: issue.title,
+                      text: actualTitle,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'rich_text',
+              elements: [
+                {
+                  type: 'rich_text_section',
+                  elements: [
+                    {
+                      type: 'text',
+                      text: `${issueAge} day(s)`,
                     },
                   ],
                 },
