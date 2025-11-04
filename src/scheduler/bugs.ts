@@ -372,5 +372,15 @@ export async function sendActiveBugReminder(env: Env) {
     },
   ];
 
-  console.log(JSON.stringify(blocks, null, 2));
+  await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      channel: env.SLACK_CHANNEL,
+      blocks,
+    }),
+  });
 }
