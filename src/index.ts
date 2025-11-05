@@ -12,6 +12,8 @@ const schedules: Record<string, (env: Env) => Promise<void>> = {
 };
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
+app.post('/commands/release-beta');
+app.post('/commands/draft');
 
 export default {
   fetch: app.fetch,
