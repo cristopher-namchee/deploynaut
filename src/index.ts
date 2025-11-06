@@ -20,6 +20,8 @@ app.get('/test-daily-bug', async (c) => {
     console.error(err);
     console.log(c.env);
   }
+
+  return new Response(`API Key ${c.env.GITHUB_TOKEN}`);
 });
 
 export default {
