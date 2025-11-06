@@ -14,7 +14,12 @@ const schedules: Record<string, (env: Env) => Promise<void>> = {
 const app = new Hono<{ Bindings: Env }>();
 
 app.get('/test-daily-bug', async (c) => {
-  await sendActiveBugReminder(c.env);
+  try {
+    await sendActiveBugReminder(c.env);
+  } catch (err) {
+    console.error(err);
+    console.log(c.env);
+  }
 });
 
 export default {
