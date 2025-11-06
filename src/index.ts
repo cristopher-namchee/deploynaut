@@ -11,7 +11,11 @@ const schedules: Record<string, (env: Env) => Promise<void>> = {
   '0 3 * * *': sendActiveBugReminder,
 };
 
-const app = new Hono<{ Bindings: CloudflareBindings }>();
+const app = new Hono<{ Bindings: Env }>();
+
+app.get('/test-daily-bug', async (c) => {
+  await sendActiveBugReminder(c.env);
+});
 
 export default {
   fetch: app.fetch,
