@@ -7,6 +7,15 @@ const GLCHAT_METADATA = {
 };
 
 export async function sendActiveBugReminder(env: Env) {
+  const today = new Date();
+
+  const pics = await getSchedule(env, today);
+  if (!pics) {
+    throw new Error('Failed to get schedule data.');
+  }
+
+  const dailyBugPic = await userLookup(env, pics[0].email);
+
   const params = new URLSearchParams();
   params.append('labels', 'bug');
   params.append('state', 'open');
@@ -17,25 +26,15 @@ export async function sendActiveBugReminder(env: Env) {
   );
   url.search = params.toString();
 
-  console.log(env);
-
   const bugsRequest = await fetch(url, {
     method: 'GET',
     headers: {
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
       'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'deploynaut',
     },
   });
-
-  const today = new Date();
-
-  const pics = await getSchedule(env, today);
-  if (!pics) {
-    throw new Error('Failed to get schedule data.');
-  }
-
-  const dailyBugPic = await userLookup(env, pics[0].email);
 
   if (!bugsRequest.ok) {
     throw new Error(
