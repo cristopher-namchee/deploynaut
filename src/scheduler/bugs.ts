@@ -384,15 +384,15 @@ export async function sendActiveBugReminder(env: Env) {
     },
   ];
 
-  // await fetch('https://slack.com/api/chat.postMessage', {
-  //   method: 'POST',
-  //   headers: {
-  //     Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     channel: env.SLACK_CHANNEL,
-  //     blocks,
-  //   }),
-  // });
+  await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      channel: env.SLACK_CHANNEL,
+      blocks,
+    }),
+  });
 }
