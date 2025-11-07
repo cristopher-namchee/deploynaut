@@ -16,6 +16,9 @@ export interface GitHubIssue {
   title: string;
   html_url: string;
   created_at: string;
+  user: {
+    login: string;
+  };
   assignees?: {
     id: number;
     url: string;

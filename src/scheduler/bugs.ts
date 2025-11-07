@@ -1,3 +1,4 @@
+import { FORM_IDENTIFIER, SENTRY_IDENTIFIER } from '../const';
 import { getSchedule, userLookup } from '../lib';
 import type { Env, GitHubIssue, GithubUser } from '../types';
 
@@ -91,6 +92,7 @@ export async function sendActiveBugReminder(env: Env) {
       return {
         title: issue.title,
         number: issue.number,
+        reporter: issue.user.login,
         url: issue.html_url,
         created_at: issue.created_at,
         assignees: slackAssignees.filter(Boolean),
@@ -205,6 +207,12 @@ export async function sendActiveBugReminder(env: Env) {
         ...bugsWithAssignees.map((issue) => {
           let source = 'Manual Report';
           let actualTitle = issue.title;
+
+          if (issue.reporter === SENTRY_IDENTIFIER) {
+            source = 'Sentry';
+          } else if (issue.reporter === FORM_IDENTIFIER) {
+            source = 'Feedback Form';
+          }
 
           const firstDash = issue.title.indexOf('-');
 
