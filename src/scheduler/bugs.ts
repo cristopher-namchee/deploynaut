@@ -149,7 +149,7 @@ export async function sendActiveBugReminder(env: Env) {
                 elements: [
                   {
                     type: 'text',
-                    text: 'Type',
+                    text: 'Source',
                     style: { bold: true },
                   },
                 ],
@@ -202,21 +202,19 @@ export async function sendActiveBugReminder(env: Env) {
             ],
           },
         ],
-        ...bugsWithAssignees.map((issue) => {
-          let typeSection = 'Manual report';
+        ...bugsWithAssignees.slice(3, 7).map((issue) => {
+          let source = 'Manual Report';
           let actualTitle = issue.title;
 
-          const firstLine = issue.title.indexOf('-');
+          const firstDash = issue.title.indexOf('-');
 
-          if (firstLine !== -1) {
-            const probablyType = issue.title.slice(0, firstLine - 1);
+          if (firstDash !== -1) {
+            const beforeDash = issue.title.slice(0, firstDash - 1).trim();
+            const bracketMatch = beforeDash.match(/^\[(.+?)\]/);
 
-            if (probablyType.startsWith('[Gloria Feedback]')) {
-              typeSection = probablyType
-                .replace('[Gloria Feedback]', '')
-                .replace(/issue$/, '')
-                .trim();
-              actualTitle = issue.title.slice(firstLine + 2);
+            if (bracketMatch) {
+              source = bracketMatch[1].trim();
+              actualTitle = issue.title.slice(firstDash + 2).trim();
             }
           }
 
@@ -249,7 +247,7 @@ export async function sendActiveBugReminder(env: Env) {
                   elements: [
                     {
                       type: 'text',
-                      text: typeSection,
+                      text: source,
                     },
                   ],
                 },
@@ -263,7 +261,10 @@ export async function sendActiveBugReminder(env: Env) {
                   elements: [
                     {
                       type: 'text',
-                      text: actualTitle,
+                      text:
+                        actualTitle.length > 48
+                          ? `${actualTitle.slice(0, 48)}...`
+                          : actualTitle,
                     },
                   ],
                 },
@@ -384,15 +385,17 @@ export async function sendActiveBugReminder(env: Env) {
     },
   ];
 
-  await fetch('https://slack.com/api/chat.postMessage', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      channel: env.SLACK_CHANNEL,
-      blocks,
-    }),
-  });
+  console.log(JSON.stringify(blocks, null, 2));
+
+  // await fetch('https://slack.com/api/chat.postMessage', {
+  //   method: 'POST',
+  //   headers: {
+  //     Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+  //     'Content-Type': 'application/json',
+  //   },
+  //   body: JSON.stringify({
+  //     channel: env.SLACK_CHANNEL,
+  //     blocks,
+  //   }),
+  // });
 }
