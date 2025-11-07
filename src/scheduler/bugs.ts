@@ -111,7 +111,7 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `Below are the list of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${today.toLocaleDateString(
+        text: `There are *${bugsWithAssignees.length}* of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${today.toLocaleDateString(
           'en-GB',
           {
             weekday: 'long',
@@ -119,7 +119,7 @@ export async function sendActiveBugReminder(env: Env) {
             month: 'long',
             day: 'numeric',
           },
-        )}*.`,
+        )}*:`,
       },
     },
     {
@@ -134,7 +134,7 @@ export async function sendActiveBugReminder(env: Env) {
                 elements: [
                   {
                     type: 'text',
-                    text: 'Issue Number',
+                    text: 'Issue #',
                     style: { bold: true },
                   },
                 ],
@@ -202,7 +202,7 @@ export async function sendActiveBugReminder(env: Env) {
             ],
           },
         ],
-        ...bugsWithAssignees.slice(3, 7).map((issue) => {
+        ...bugsWithAssignees.map((issue) => {
           let source = 'Manual Report';
           let actualTitle = issue.title;
 
@@ -262,8 +262,8 @@ export async function sendActiveBugReminder(env: Env) {
                     {
                       type: 'text',
                       text:
-                        actualTitle.length > 48
-                          ? `${actualTitle.slice(0, 48)}...`
+                        actualTitle.length > 56
+                          ? `${actualTitle.slice(0, 56)}...`
                           : actualTitle,
                     },
                   ],
