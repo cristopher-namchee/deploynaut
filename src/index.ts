@@ -11,7 +11,7 @@ const schedules: Record<string, (env: Env) => Promise<void>> = {
   '0 3 * * *': sendActiveBugReminder,
 };
 
-const app = new Hono<{ Bindings: CloudflareBindings }>();
+const app = new Hono<{ Bindings: Env }>();
 app.post('/commands/release-beta');
 app.post('/commands/draft');
 

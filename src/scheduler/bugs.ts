@@ -1,3 +1,4 @@
+import { FORM_IDENTIFIER, SENTRY_IDENTIFIER } from '../const';
 import { getSchedule, userLookup } from '../lib';
 import type { Env, GitHubIssue, GithubUser } from '../types';
 
@@ -32,6 +33,7 @@ export async function sendActiveBugReminder(env: Env) {
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
       'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'deploynaut',
     },
   });
 
@@ -51,6 +53,8 @@ export async function sendActiveBugReminder(env: Env) {
           title: issue.title,
           number: issue.number,
           url: issue.html_url,
+          created_at: issue.created_at,
+          reporter: issue.user.login,
           assignees: [],
         };
       }
@@ -62,6 +66,7 @@ export async function sendActiveBugReminder(env: Env) {
               Accept: 'application/vnd.github+json',
               Authorization: `Bearer ${env.GITHUB_TOKEN}`,
               'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'deploynaut',
             },
           });
 
@@ -89,6 +94,7 @@ export async function sendActiveBugReminder(env: Env) {
       return {
         title: issue.title,
         number: issue.number,
+        reporter: issue.user.login,
         url: issue.html_url,
         created_at: issue.created_at,
         assignees: slackAssignees.filter(Boolean),
@@ -109,7 +115,7 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `Below are the list of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${today.toLocaleDateString(
+        text: `There are *${bugsWithAssignees.length}* of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${today.toLocaleDateString(
           'en-GB',
           {
             weekday: 'long',
@@ -117,7 +123,7 @@ export async function sendActiveBugReminder(env: Env) {
             month: 'long',
             day: 'numeric',
           },
-        )}*.`,
+        )}*:`,
       },
     },
     {
@@ -132,7 +138,7 @@ export async function sendActiveBugReminder(env: Env) {
                 elements: [
                   {
                     type: 'text',
-                    text: 'Issue Number',
+                    text: 'Issue #',
                     style: { bold: true },
                   },
                 ],
@@ -147,7 +153,7 @@ export async function sendActiveBugReminder(env: Env) {
                 elements: [
                   {
                     type: 'text',
-                    text: 'Type',
+                    text: 'Source',
                     style: { bold: true },
                   },
                 ],
@@ -200,110 +206,119 @@ export async function sendActiveBugReminder(env: Env) {
             ],
           },
         ],
-        ...bugsWithAssignees.map((issue) => {
-          let typeSection = 'Manual report';
-          let actualTitle = issue.title;
+        ...bugsWithAssignees
+          .sort((a, b) => a.created_at.localeCompare(b.created_at))
+          .map((issue) => {
+            let source = 'Manual Report';
+            let actualTitle = issue.title;
 
-          const firstLine = issue.title.indexOf('-');
-
-          if (firstLine !== -1) {
-            const probablyType = issue.title.slice(0, firstLine - 1);
-
-            if (probablyType.startsWith('[Gloria Feedback]')) {
-              typeSection = probablyType
-                .replace('[Gloria Feedback]', '')
-                .replace(/issue$/, '')
-                .trim();
-              actualTitle = issue.title.slice(firstLine + 2);
+            if (issue.reporter === SENTRY_IDENTIFIER) {
+              source = 'Sentry';
+            } else if (issue.reporter === FORM_IDENTIFIER) {
+              source = 'Feedback Form';
             }
-          }
 
-          const issueAge = Math.round(
-            (today.getTime() - new Date(issue.created_at ?? '').getTime()) /
-              (1000 * 60 * 60 * 24),
-          );
+            const firstDash = issue.title.indexOf('-');
 
-          return [
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'link',
-                      text: issue.number.toString(),
-                      url: issue.url,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'text',
-                      text: typeSection,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'text',
-                      text: actualTitle,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'text',
-                      text: `${issueAge} day(s)`,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements:
-                    issue.assignees.length === 0
-                      ? [
-                          {
-                            type: 'text',
-                            text: '⚠️',
-                            emoji: true,
-                          },
-                        ]
-                      : issue.assignees.map((assignee) => ({
-                          type: 'user',
-                          user_id: assignee,
-                        })),
-                },
-              ],
-            },
-          ];
-        }),
+            if (firstDash !== -1) {
+              const beforeDash = issue.title.slice(0, firstDash - 1).trim();
+              const bracketMatch = beforeDash.match(/^\[(.+?)\]/);
+
+              if (bracketMatch) {
+                source = bracketMatch[1].trim();
+                actualTitle = issue.title.slice(firstDash + 2).trim();
+              }
+            }
+
+            const issueAge = Math.round(
+              (today.getTime() - new Date(issue.created_at ?? '').getTime()) /
+                (1000 * 60 * 60 * 24),
+            );
+
+            return [
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'link',
+                        text: issue.number.toString(),
+                        url: issue.url,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'text',
+                        text: source,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'text',
+                        text:
+                          actualTitle.length > 56
+                            ? `${actualTitle.slice(0, 56)}...`
+                            : actualTitle,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'text',
+                        text: `${issueAge} day(s)`,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements:
+                      issue.assignees.length === 0
+                        ? [
+                            {
+                              type: 'text',
+                              text: '⚠️',
+                              emoji: true,
+                            },
+                          ]
+                        : issue.assignees.map((assignee) => ({
+                            type: 'user',
+                            user_id: assignee,
+                          })),
+                  },
+                ],
+              },
+            ];
+          }),
       ],
     },
     {
