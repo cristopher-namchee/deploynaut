@@ -53,6 +53,8 @@ export async function sendActiveBugReminder(env: Env) {
           title: issue.title,
           number: issue.number,
           url: issue.html_url,
+          created_at: issue.created_at,
+          reporter: issue.user.login,
           assignees: [],
         };
       }
@@ -204,117 +206,119 @@ export async function sendActiveBugReminder(env: Env) {
             ],
           },
         ],
-        ...bugsWithAssignees.map((issue) => {
-          let source = 'Manual Report';
-          let actualTitle = issue.title;
+        ...bugsWithAssignees
+          .sort((a, b) => a.created_at.localeCompare(b.created_at))
+          .map((issue) => {
+            let source = 'Manual Report';
+            let actualTitle = issue.title;
 
-          if (issue.reporter === SENTRY_IDENTIFIER) {
-            source = 'Sentry';
-          } else if (issue.reporter === FORM_IDENTIFIER) {
-            source = 'Feedback Form';
-          }
-
-          const firstDash = issue.title.indexOf('-');
-
-          if (firstDash !== -1) {
-            const beforeDash = issue.title.slice(0, firstDash - 1).trim();
-            const bracketMatch = beforeDash.match(/^\[(.+?)\]/);
-
-            if (bracketMatch) {
-              source = bracketMatch[1].trim();
-              actualTitle = issue.title.slice(firstDash + 2).trim();
+            if (issue.reporter === SENTRY_IDENTIFIER) {
+              source = 'Sentry';
+            } else if (issue.reporter === FORM_IDENTIFIER) {
+              source = 'Feedback Form';
             }
-          }
 
-          const issueAge = Math.round(
-            (today.getTime() - new Date(issue.created_at ?? '').getTime()) /
-              (1000 * 60 * 60 * 24),
-          );
+            const firstDash = issue.title.indexOf('-');
 
-          return [
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'link',
-                      text: issue.number.toString(),
-                      url: issue.url,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'text',
-                      text: source,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'text',
-                      text:
-                        actualTitle.length > 56
-                          ? `${actualTitle.slice(0, 56)}...`
-                          : actualTitle,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements: [
-                    {
-                      type: 'text',
-                      text: `${issueAge} day(s)`,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'rich_text',
-              elements: [
-                {
-                  type: 'rich_text_section',
-                  elements:
-                    issue.assignees.length === 0
-                      ? [
-                          {
-                            type: 'text',
-                            text: '⚠️',
-                            emoji: true,
-                          },
-                        ]
-                      : issue.assignees.map((assignee) => ({
-                          type: 'user',
-                          user_id: assignee,
-                        })),
-                },
-              ],
-            },
-          ];
-        }),
+            if (firstDash !== -1) {
+              const beforeDash = issue.title.slice(0, firstDash - 1).trim();
+              const bracketMatch = beforeDash.match(/^\[(.+?)\]/);
+
+              if (bracketMatch) {
+                source = bracketMatch[1].trim();
+                actualTitle = issue.title.slice(firstDash + 2).trim();
+              }
+            }
+
+            const issueAge = Math.round(
+              (today.getTime() - new Date(issue.created_at ?? '').getTime()) /
+                (1000 * 60 * 60 * 24),
+            );
+
+            return [
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'link',
+                        text: issue.number.toString(),
+                        url: issue.url,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'text',
+                        text: source,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'text',
+                        text:
+                          actualTitle.length > 56
+                            ? `${actualTitle.slice(0, 56)}...`
+                            : actualTitle,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements: [
+                      {
+                        type: 'text',
+                        text: `${issueAge} day(s)`,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: 'rich_text',
+                elements: [
+                  {
+                    type: 'rich_text_section',
+                    elements:
+                      issue.assignees.length === 0
+                        ? [
+                            {
+                              type: 'text',
+                              text: '⚠️',
+                              emoji: true,
+                            },
+                          ]
+                        : issue.assignees.map((assignee) => ({
+                            type: 'user',
+                            user_id: assignee,
+                          })),
+                  },
+                ],
+              },
+            ];
+          }),
       ],
     },
     {
@@ -393,17 +397,15 @@ export async function sendActiveBugReminder(env: Env) {
     },
   ];
 
-  console.log(JSON.stringify(blocks, null, 2));
-
-  // await fetch('https://slack.com/api/chat.postMessage', {
-  //   method: 'POST',
-  //   headers: {
-  //     Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     channel: env.SLACK_CHANNEL,
-  //     blocks,
-  //   }),
-  // });
+  await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      channel: env.SLACK_CHANNEL,
+      blocks,
+    }),
+  });
 }
