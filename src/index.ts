@@ -12,7 +12,8 @@ const schedules: Record<string, (env: Env) => Promise<void>> = {
 };
 
 const app = new Hono<{ Bindings: Env }>();
-app.post('/commands/release-beta');
+
+app.post('/commands/release');
 app.post('/commands/draft');
 
 export default {
