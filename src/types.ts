@@ -11,7 +11,7 @@ export interface GithubUser {
   email: string | null;
 }
 
-export interface GitHubIssue {
+export interface GithubIssue {
   number: number;
   title: string;
   html_url: string;
@@ -24,4 +24,8 @@ export interface GitHubIssue {
     url: string;
     nodeid: number;
   }[];
+}
+
+export interface ReleasePayload {
+  type: 'view_submission';
 }

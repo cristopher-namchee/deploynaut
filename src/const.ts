@@ -1,2 +1,9 @@
-export const FORM_IDENTIFIER = 'infra-gl';
-export const SENTRY_IDENTIFIER = 'sentry[bot]';
+export const IssueReporter = {
+  Form: 'infra-gl',
+  Sentry: 'sentry[bot]',
+};
+
+export const ReleaseCommand = {
+  CallbackID: 'release',
+  InteractiveEvent: 'view_submission:release',
+};
