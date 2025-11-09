@@ -11,7 +11,7 @@ export interface GithubUser {
   email: string | null;
 }
 
-export interface GitHubIssue {
+export interface GithubIssue {
   number: number;
   title: string;
   html_url: string;
@@ -24,4 +24,27 @@ export interface GitHubIssue {
     url: string;
     nodeid: number;
   }[];
+}
+
+type Interactivity =
+  | 'view_submission'
+  | 'block_actions'
+  | 'shortcut'
+  | 'message_actions'
+  | 'view_closed';
+
+export interface InteractivityPayload {
+  type: Interactivity;
+  view: {
+    type: string;
+    callback_id: string;
+  };
+}
+
+export interface ReleasePayload extends InteractivityPayload {
+  type: 'view_submission';
+  view: {
+    type: 'modal';
+    callback_id: string;
+  };
 }

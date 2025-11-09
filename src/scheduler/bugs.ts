@@ -1,10 +1,16 @@
-import { FORM_IDENTIFIER, SENTRY_IDENTIFIER } from '../const';
+import { IssueReporter } from '../const';
 import { getSchedule, userLookup } from '../lib';
-import type { Env, GitHubIssue, GithubUser } from '../types';
 
-const GLCHAT_METADATA = {
+import type { Env, GithubIssue, GithubUser } from '../types';
+
+const GLChatMetadata = {
   owner: 'GDP-ADMIN',
   repo: 'glchat',
+};
+
+const IssueReporterMap = {
+  [IssueReporter.Form]: 'Feedback Form',
+  [IssueReporter.Sentry]: 'Sentry',
 };
 
 export async function sendActiveBugReminder(env: Env) {
@@ -22,7 +28,7 @@ export async function sendActiveBugReminder(env: Env) {
   params.append('state', 'open');
 
   const url = new URL(
-    `/repos/${GLCHAT_METADATA.owner}/${GLCHAT_METADATA.repo}/issues`,
+    `/repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/issues`,
     'https://api.github.com',
   );
   url.search = params.toString();
@@ -43,7 +49,7 @@ export async function sendActiveBugReminder(env: Env) {
     );
   }
 
-  const bugs = (await bugsRequest.json()) as GitHubIssue[];
+  const bugs = (await bugsRequest.json()) as GithubIssue[];
   const bugsWithAssignees = await Promise.all(
     bugs.map(async (issue) => {
       const users = issue.assignees;
@@ -209,14 +215,8 @@ export async function sendActiveBugReminder(env: Env) {
         ...bugsWithAssignees
           .sort((a, b) => a.created_at.localeCompare(b.created_at))
           .map((issue) => {
-            let source = 'Manual Report';
+            let source = IssueReporterMap[issue.reporter] ?? 'Manual Report';
             let actualTitle = issue.title;
-
-            if (issue.reporter === SENTRY_IDENTIFIER) {
-              source = 'Sentry';
-            } else if (issue.reporter === FORM_IDENTIFIER) {
-              source = 'Feedback Form';
-            }
 
             const firstDash = issue.title.indexOf('-');
 
