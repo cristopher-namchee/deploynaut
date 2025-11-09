@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 
 import { spawnReleaseDialog } from './commands/release';
 
@@ -18,16 +18,19 @@ const schedules: Record<string, (env: Env) => Promise<void>> = {
   '0 3 * * *': sendActiveBugReminder,
 };
 
-const interactivity: Record<string, (payload: any, env: Env) => Promise<void>> =
-  {
-    [ReleaseCommand.InteractiveEvent]: handleReleaseSubmission,
-  };
+const interactivity: Record<
+  string,
+  (payload: any, c: Context<{ Bindings: Env }>) => Promise<Response>
+> = {
+  [ReleaseCommand.InteractiveEvent]: handleReleaseSubmission,
+};
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.post('/commands/release', spawnReleaseDialog);
 app.post('/interactivity', async (c) => {
   const body = (await c.req.parseBody()) as unknown as InteractivityPayload;
+  console.log(body);
 
   const eventTokens: string[] = [body.type];
   if (body.view) {
@@ -39,7 +42,7 @@ app.post('/interactivity', async (c) => {
     return c.notFound();
   }
 
-  await interactivity[event](body, c.env);
+  await interactivity[event](body, c);
 });
 
 export default {
