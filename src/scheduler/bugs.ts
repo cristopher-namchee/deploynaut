@@ -1,12 +1,7 @@
-import { IssueReporter } from '../const';
+import { GLChatMetadata, IssueReporter } from '../const';
 import { getSchedule, userLookup } from '../lib';
 
 import type { Env, GithubIssue, GithubUser } from '../types';
-
-const GLChatMetadata = {
-  owner: 'GDP-ADMIN',
-  repo: 'glchat',
-};
 
 const IssueReporterMap = {
   [IssueReporter.Form]: 'Feedback Form',

@@ -7,3 +7,8 @@ export const ReleaseCommand = {
   CallbackID: 'release',
   InteractiveEvent: 'view_submission:release',
 };
+
+export const GLChatMetadata = {
+  owner: 'GDP-ADMIN',
+  repo: 'glchat',
+};

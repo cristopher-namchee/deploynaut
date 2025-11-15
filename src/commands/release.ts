@@ -25,6 +25,7 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
             {
               type: 'input',
               block_id: 'prefix_input',
+              optional: true,
               element: {
                 type: 'plain_text_input',
                 action_id: 'prefix',
@@ -41,6 +42,7 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
             {
               type: 'input',
               block_id: 'version_input',
+              optional: true,
               element: {
                 type: 'plain_text_input',
                 action_id: 'version',
@@ -57,6 +59,7 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
             {
               type: 'input',
               block_id: 'branch_input',
+              optional: true,
               element: {
                 type: 'plain_text_input',
                 action_id: 'branch',
@@ -73,6 +76,7 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
             {
               type: 'input',
               block_id: 'commit_input',
+              optional: true,
               element: {
                 type: 'plain_text_input',
                 action_id: 'commit',
@@ -106,7 +110,7 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
                       type: 'plain_text',
                       text: 'Mark as pre-release',
                     },
-                    value: 'prerelease',
+                    value: 'pre_release',
                   },
                   {
                     text: {

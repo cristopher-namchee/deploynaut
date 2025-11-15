@@ -79,3 +79,13 @@ export interface ReleasePayload extends InteractivityPayload {
     };
   };
 }
+
+export interface ReleaseInput {
+  prefix: string;
+  commit: string;
+  branch: string;
+  version: string;
+  draft: boolean;
+  preRelease: boolean;
+  dryRun: boolean;
+}
