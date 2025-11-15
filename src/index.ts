@@ -21,11 +21,15 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.post('/commands/release', spawnReleaseDialog);
 app.post('/interactivity', async (c) => {
-  const body = (await c.req.parseBody()) as unknown as InteractivityPayload;
+  const { payload } = (await c.req.parseBody()) as unknown as {
+    payload: string;
+  };
+
+  const body = JSON.parse(payload) as InteractivityPayload;
 
   const eventTokens: string[] = [body.type];
   if (body.view) {
-    eventTokens.push(body.view.type);
+    eventTokens.push(body.view.callback_id);
   }
   const event = eventTokens.join(':');
 

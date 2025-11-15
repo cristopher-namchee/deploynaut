@@ -36,7 +36,6 @@ type Interactivity =
 export interface InteractivityPayload {
   type: Interactivity;
   view: {
-    type: string;
     callback_id: string;
   };
 }
@@ -44,7 +43,6 @@ export interface InteractivityPayload {
 export interface ReleasePayload extends InteractivityPayload {
   type: 'view_submission';
   view: {
-    type: 'modal';
     callback_id: string;
   };
 }
