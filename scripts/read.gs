@@ -16,6 +16,10 @@ function validateParams(params) {
   };
 }
 
+function validatePayload(payload) {
+  
+}
+
 function formatDate(date) {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
@@ -50,7 +54,10 @@ function extractEmail(sheet, row, column) {
 
   formulaCell.clear();
 
-  return email;
+  return {
+    name: range.getValue(),
+    email,
+  };
 }
 
 function getDeploymentPIC(date) {
@@ -114,5 +121,13 @@ function doGet(e) {
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: `Script failed to execute due to: ${err.message}` }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    const payload = validatePayload();
+  } catch (err) {
+
   }
 }
