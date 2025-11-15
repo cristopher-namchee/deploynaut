@@ -40,9 +40,42 @@ export interface InteractivityPayload {
   };
 }
 
+/* ------------------------
+ * Release Types
+ * ------------------------
+ */
+type InputValue = {
+  value: string;
+};
+
 export interface ReleasePayload extends InteractivityPayload {
   type: 'view_submission';
   view: {
     callback_id: string;
+    state: {
+      values: {
+        prefix_input: {
+          prefix: InputValue;
+        };
+        version_input: {
+          version: InputValue;
+        };
+        branch_input: {
+          branch: InputValue;
+        };
+        commit_input: {
+          commit: InputValue;
+        };
+        release_toggle: {
+          toggles: {
+            selected_options: [
+              {
+                value: string;
+              },
+            ];
+          };
+        };
+      };
+    };
   };
 }

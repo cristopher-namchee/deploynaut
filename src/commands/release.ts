@@ -72,7 +72,7 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
             },
             {
               type: 'input',
-              block_id: 'commit',
+              block_id: 'commit_input',
               element: {
                 type: 'plain_text_input',
                 action_id: 'commit',
@@ -88,6 +88,7 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
             },
             {
               type: 'input',
+              optional: true,
               block_id: 'release_toggle',
               element: {
                 type: 'checkboxes',
