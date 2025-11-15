@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import { GLChatMetadata } from '../const';
 import type {
   Env,
+  GithubRelease,
   InteractivityPayload,
   ReleaseInput,
   ReleasePayload,
@@ -82,9 +83,12 @@ async function validateInput(input: ReleaseInput, token: string) {
   ]);
 }
 
-async function getLatestRelease(prefix: string) {
+async function getLatestReleaseWithPrefix(
+  prefix: string,
+  token: string,
+): Promise<string> {
   const url = new URL(
-    'repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/releases',
+    `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/releases`,
     'https://api.github.com/',
   );
 
@@ -96,6 +100,30 @@ async function getLatestRelease(prefix: string) {
       Authorization: `Bearer ${token}`,
     },
   });
+
+  const releases = (await response.json()) as GithubRelease[];
+  const sortedReleases = releases.sort(
+    (a, b) =>
+      new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+  );
+
+  for (const release of sortedReleases) {
+    if (release.tag_name.startsWith(prefix)) {
+      const [_, version] = release.tag_name.split('-');
+
+      return version;
+    }
+  }
+
+  // if somehow not found, use 0.0.0
+  return '0.0.0';
+}
+
+async function getLatestCommit(token: string) {
+  const url = new URL(
+    `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/releases`,
+    'https://api.github.com/',
+  );
 }
 
 export async function handleReleaseSubmission(

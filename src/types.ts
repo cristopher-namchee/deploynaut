@@ -89,3 +89,8 @@ export interface ReleaseInput {
   preRelease: boolean;
   dryRun: boolean;
 }
+
+export interface GithubRelease {
+  tag_name: string;
+  published_at: string;
+}
