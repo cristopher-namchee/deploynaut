@@ -127,5 +127,5 @@ export async function spawnReleaseDialog(c: Context<{ Bindings: Env }>) {
     }),
   );
 
-  return c.text('OK', 200);
+  return c.text('', 200);
 }

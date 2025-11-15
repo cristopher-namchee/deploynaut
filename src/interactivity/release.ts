@@ -1,8 +1,12 @@
-import type { Env, ReleasePayload } from '../types';
+import type { Context } from 'hono';
+
+import type { Env, InteractivityPayload, ReleasePayload } from '../types';
 
 export async function handleReleaseSubmission(
-  payload: ReleasePayload,
-  env: Env,
+  payload: InteractivityPayload,
+  c: Context<{ Bindings: Env }>,
 ) {
-  console.log(payload);
+  const releasePayload = payload as ReleasePayload;
+
+  return c.text('', 200);
 }
