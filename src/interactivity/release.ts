@@ -24,7 +24,7 @@ function bumpVersion(version: string): string {
   return `${hasV ? 'v' : ''}${Number(maj) + 1}`;
 }
 
-function createReleaseTitle(prefix: string, version: string) {
+function generateReleaseTitle(prefix: string, version: string) {
   const label: Record<string, string> = {
     plgr: 'Beta',
     release: 'Production',
@@ -40,6 +40,10 @@ function createReleaseTitle(prefix: string, version: string) {
       day: 'numeric',
     },
   )}`;
+}
+
+function generateReleaseNote(commit: string, token: string) {
+  const url = new URL();
 }
 
 async function validateBranch(branch: string, token: string): Promise<boolean> {
@@ -172,8 +176,8 @@ async function getLatestReleaseWithPrefix(
     }
   }
 
-  // if somehow not found, use 0.0.0
-  return '0.0.0';
+  // if somehow not found, use 0.0.000
+  return '0.0.000';
 }
 
 async function getLatestCommit(branch: string, token: string): Promise<string> {
@@ -265,7 +269,7 @@ export async function handleReleaseSubmission(
   }
 
   const newVersion = bumpVersion(input.version);
-  const releaseTitle = createReleaseTitle(input.prefix, newVersion);
+  const releaseTitle = generateReleaseTitle(input.prefix, newVersion);
 
   return c.text('', 200);
 }
