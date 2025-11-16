@@ -42,6 +42,8 @@ async function validateBranch(branch: string, token: string): Promise<boolean> {
       },
     });
 
+    console.log(response);
+
     return response.status === 200;
   } catch {
     return false;
@@ -140,12 +142,12 @@ async function getLatestReleaseWithPrefix(
   });
 
   const releases = (await response.json()) as GithubRelease[];
-  const sortedReleases = releases.sort(
+  releases.sort(
     (a, b) =>
       new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
   );
 
-  for (const release of sortedReleases) {
+  for (const release of releases) {
     if (release.tag_name.startsWith(prefix)) {
       const [_, version] = release.tag_name.split('-');
 
@@ -201,6 +203,8 @@ async function normalizeInput(
       ),
     );
   }
+
+  await Promise.all(promises);
 
   return normalizedInput;
 }
