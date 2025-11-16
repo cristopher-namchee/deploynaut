@@ -10,20 +10,18 @@ import type {
 } from '../types';
 
 function bumpVersion(version: string): string {
-  const tokens = version.split('.');
-  const major = tokens[0];
-  const minor = tokens[1];
-  const patch = tokens[2];
+  const hasV = version.startsWith('v');
+  const [maj, min, pat] = (hasV ? version.slice(1) : version).split('.');
 
-  if (patch) {
-    return `${major}.${minor}.${Number(patch) + 1}`;
+  if (pat !== undefined) {
+    return `${hasV ? 'v' : ''}${maj}.${min}.${String(Number(pat) + 1).padStart(3, '0')}`;
   }
 
-  if (minor) {
-    return `${major}.${Number(minor) + 1}`;
+  if (min !== undefined) {
+    return `${hasV ? 'v' : ''}${maj}.${Number(min) + 1}`;
   }
 
-  return `${Number(major) + 1}`;
+  return `${hasV ? 'v' : ''}${Number(maj) + 1}`;
 }
 
 async function validateBranch(branch: string, token: string): Promise<boolean> {
@@ -247,6 +245,8 @@ export async function handleReleaseSubmission(
       200,
     );
   }
+
+  const newVersion = bumpVersion(input.version);
 
   return c.text('', 200);
 }
