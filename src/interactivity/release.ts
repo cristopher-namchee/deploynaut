@@ -24,6 +24,24 @@ function bumpVersion(version: string): string {
   return `${hasV ? 'v' : ''}${Number(maj) + 1}`;
 }
 
+function createReleaseTitle(prefix: string, version: string) {
+  const label: Record<string, string> = {
+    plgr: 'Beta',
+    release: 'Production',
+  };
+
+  const tag = prefix === 'plgr' ? version : `${prefix}-${version}`;
+
+  return `Release ${label[prefix] ?? prefix.toUpperCase()} ${tag} - ${new Date().toLocaleDateString(
+    'en-GB',
+    {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    },
+  )}`;
+}
+
 async function validateBranch(branch: string, token: string): Promise<boolean> {
   try {
     const url = new URL(
@@ -247,6 +265,7 @@ export async function handleReleaseSubmission(
   }
 
   const newVersion = bumpVersion(input.version);
+  const releaseTitle = createReleaseTitle(input.prefix, newVersion);
 
   return c.text('', 200);
 }
