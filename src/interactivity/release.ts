@@ -9,7 +9,7 @@ import type {
   ReleasePayload,
 } from '../types';
 
-async function bumpVersion(version: string): string {
+function bumpVersion(version: string): string {
   const tokens = version.split('.');
   const major = tokens[0];
   const minor = tokens[1];
@@ -97,6 +97,7 @@ async function validateInput(
   input: ReleaseInput,
   token: string,
 ): Promise<Record<string, string>> {
+  console.log(input);
   const [isValidBranch, isValidCommit, isValidTag] = await Promise.all([
     validateBranch(input.branch, token),
     validateCommit(input.commit, token),
@@ -109,7 +110,7 @@ async function validateInput(
     errors.branch_input = 'This branch does not exist in the repository';
   }
 
-  if (!isValidCommit) {
+  if (!isValidCommit && isValidBranch) {
     errors.commit_input = 'This commit SHA does not exist in the repository';
   }
 
@@ -230,7 +231,16 @@ export async function handleReleaseSubmission(
     c.env.GITHUB_TOKEN,
   );
 
-  const errors = validateInput(input, c.env.GITHUB_TOKEN);
+  const errors = await validateInput(input, c.env.GITHUB_TOKEN);
+  if (errors) {
+    return c.json(
+      {
+        response_action: 'errors',
+        errors,
+      },
+      200,
+    );
+  }
 
   return c.text('', 200);
 }
