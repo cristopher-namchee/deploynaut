@@ -39,10 +39,9 @@ async function validateBranch(branch: string, token: string): Promise<boolean> {
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
         Authorization: `Bearer ${token}`,
+        'User-Agent': 'deploynaut',
       },
     });
-
-    console.log(response);
 
     return response.status === 200;
   } catch {
@@ -63,6 +62,7 @@ async function validateCommit(commit: string, token: string): Promise<boolean> {
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
         Authorization: `Bearer ${token}`,
+        'User-Agent': 'deploynaut',
       },
     });
 
@@ -85,6 +85,7 @@ async function validateTag(tag: string, token: string): Promise<boolean> {
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
         Authorization: `Bearer ${token}`,
+        'User-Agent': 'deploynaut',
       },
     });
 
@@ -99,7 +100,6 @@ async function validateInput(
   input: ReleaseInput,
   token: string,
 ): Promise<Record<string, string>> {
-  console.log(input);
   const [isValidBranch, isValidCommit, isValidTag] = await Promise.all([
     validateBranch(input.branch, token),
     validateCommit(input.commit, token),
@@ -138,6 +138,7 @@ async function getLatestReleaseWithPrefix(
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
       Authorization: `Bearer ${token}`,
+      'User-Agent': 'deploynaut',
     },
   });
 
@@ -171,6 +172,7 @@ async function getLatestCommit(branch: string, token: string): Promise<string> {
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
       Authorization: `Bearer ${token}`,
+      'User-Agent': 'deploynaut',
     },
   });
 
