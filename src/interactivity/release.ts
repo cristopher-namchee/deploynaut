@@ -42,8 +42,11 @@ function generateReleaseTitle(prefix: string, version: string) {
   )}`;
 }
 
-function generateReleaseNote(commit: string, token: string) {
-  const url = new URL();
+async function generateReleaseNote(
+  lastCommit: string,
+  token: string,
+): Promise<string> {
+  const targetDate = '';
 }
 
 async function validateBranch(branch: string, token: string): Promise<boolean> {
@@ -70,6 +73,11 @@ async function validateBranch(branch: string, token: string): Promise<boolean> {
 }
 
 async function validateCommit(commit: string, token: string): Promise<boolean> {
+  // allow empty string, will be resolved later.
+  if (!commit) {
+    return true;
+  }
+
   try {
     const url = new URL(
       `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/commits/${commit}`,
@@ -143,16 +151,16 @@ async function validateInput(
   return errors;
 }
 
-async function getLatestReleaseWithPrefix(
+async function getLatestRelease(
   prefix: string,
   token: string,
-): Promise<string> {
-  const url = new URL(
+): Promise<{ version: string; publishedAt: string }> {
+  const releasesUrl = new URL(
     `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/releases`,
     'https://api.github.com/',
   );
 
-  const response = await fetch(url, {
+  const response = await fetch(releasesUrl, {
     method: 'GET',
     headers: {
       Accept: 'application/vnd.github+json',
@@ -172,21 +180,19 @@ async function getLatestReleaseWithPrefix(
     if (release.tag_name.startsWith(prefix)) {
       const [_, version] = release.tag_name.split('-');
 
-      return version;
+      return {
+        version,
+        publishedAt: release.published_at ?? release.created_at,
+      };
     }
   }
 
-  // if somehow not found, use 0.0.000
-  return '0.0.000';
-}
-
-async function getLatestCommit(branch: string, token: string): Promise<string> {
-  const url = new URL(
-    `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/branches/${branch}`,
+  const repoUrl = new URL(
+    `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}`,
     'https://api.github.com/',
   );
 
-  const response = await fetch(url, {
+  const repoMeta = await fetch(repoUrl, {
     method: 'GET',
     headers: {
       Accept: 'application/vnd.github+json',
@@ -196,9 +202,13 @@ async function getLatestCommit(branch: string, token: string): Promise<string> {
     },
   });
 
-  const body = (await response.json()) as GithubCommit;
+  const repoData = (await repoMeta.json()) as { created_at: string };
 
-  return body.commit.sha;
+  // if somehow not found, use 0.0.000
+  return {
+    version: '0.0.000',
+    publishedAt: repoData.created_at,
+  };
 }
 
 async function normalizeInput(
@@ -206,27 +216,12 @@ async function normalizeInput(
   token: string,
 ): Promise<ReleaseInput> {
   const normalizedInput = { ...input };
-  const promises = [];
-
-  if (!normalizedInput.commit) {
-    promises.push(
-      getLatestCommit(normalizedInput.branch, token).then((commit) => {
-        normalizedInput.commit = commit;
-      }),
-    );
-  }
 
   if (!normalizedInput.version) {
-    promises.push(
-      getLatestReleaseWithPrefix(normalizedInput.prefix, token).then(
-        (version) => {
-          normalizedInput.version = bumpVersion(version);
-        },
-      ),
-    );
-  }
+    const { version } = await getLatestRelease(normalizedInput.prefix, token);
 
-  await Promise.all(promises);
+    normalizedInput.version = bumpVersion(version);
+  }
 
   return normalizedInput;
 }

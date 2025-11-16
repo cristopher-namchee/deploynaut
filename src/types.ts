@@ -92,6 +92,7 @@ export interface ReleaseInput {
 
 export interface GithubRelease {
   tag_name: string;
+  created_at: string;
   published_at: string;
 }
 
