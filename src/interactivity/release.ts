@@ -2,11 +2,29 @@ import type { Context } from 'hono';
 import { GLChatMetadata } from '../const';
 import type {
   Env,
+  GithubCommit,
   GithubRelease,
   InteractivityPayload,
   ReleaseInput,
   ReleasePayload,
 } from '../types';
+
+async function bumpVersion(version: string): string {
+  const tokens = version.split('.');
+  const major = tokens[0];
+  const minor = tokens[1];
+  const patch = tokens[2];
+
+  if (patch) {
+    return `${major}.${minor}.${Number(patch) + 1}`;
+  }
+
+  if (minor) {
+    return `${major}.${Number(minor) + 1}`;
+  }
+
+  return `${Number(major) + 1}`;
+}
 
 async function validateBranch(branch: string, token: string): Promise<boolean> {
   try {
@@ -75,12 +93,31 @@ async function validateTag(tag: string, token: string): Promise<boolean> {
   }
 }
 
-async function validateInput(input: ReleaseInput, token: string) {
+async function validateInput(
+  input: ReleaseInput,
+  token: string,
+): Promise<Record<string, string>> {
   const [isValidBranch, isValidCommit, isValidTag] = await Promise.all([
     validateBranch(input.branch, token),
     validateCommit(input.commit, token),
     validateTag(`${input.prefix}-${input.version}`, token),
   ]);
+
+  const errors: Record<string, string> = {};
+
+  if (!isValidBranch) {
+    errors.branch_input = 'This branch does not exist in the repository';
+  }
+
+  if (!isValidCommit) {
+    errors.commit_input = 'This commit SHA does not exist in the repository';
+  }
+
+  if (!isValidTag) {
+    errors.version_input = 'This tag already exist';
+  }
+
+  return errors;
 }
 
 async function getLatestReleaseWithPrefix(
@@ -119,11 +156,52 @@ async function getLatestReleaseWithPrefix(
   return '0.0.0';
 }
 
-async function getLatestCommit(token: string) {
+async function getLatestCommit(branch: string, token: string): Promise<string> {
   const url = new URL(
-    `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/releases`,
+    `repos/${GLChatMetadata.owner}/${GLChatMetadata.repo}/branches/${branch}`,
     'https://api.github.com/',
   );
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const body = (await response.json()) as GithubCommit;
+
+  return body.commit.sha;
+}
+
+async function normalizeInput(
+  input: ReleaseInput,
+  token: string,
+): Promise<ReleaseInput> {
+  const normalizedInput = { ...input };
+  const promises = [];
+
+  if (!normalizedInput.commit) {
+    promises.push(
+      getLatestCommit(normalizedInput.branch, token).then((commit) => {
+        normalizedInput.commit = commit;
+      }),
+    );
+  }
+
+  if (!normalizedInput.version) {
+    promises.push(
+      getLatestReleaseWithPrefix(normalizedInput.prefix, token).then(
+        (version) => {
+          normalizedInput.version = bumpVersion(version);
+        },
+      ),
+    );
+  }
+
+  return normalizedInput;
 }
 
 export async function handleReleaseSubmission(
@@ -133,21 +211,26 @@ export async function handleReleaseSubmission(
   const { view } = payload as ReleasePayload;
   const { state } = view;
 
-  const cleanedPayload = {
-    prefix: state.values.prefix_input.prefix.value ?? 'release',
-    commit: state.values.commit_input.commit.value,
-    branch: state.values.branch_input.branch.value ?? 'main',
-    version: state.values.version_input.version.value,
-    draft: state.values.release_toggle.toggles.selected_options.find(
-      (option) => option.value === 'draft',
-    ),
-    preRelease: state.values.release_toggle.toggles.selected_options.find(
-      (option) => option.value === 'pre_release',
-    ),
-    dryRun: state.values.release_toggle.toggles.selected_options.find(
-      (option) => option.value === 'dry_run',
-    ),
-  };
+  const input = await normalizeInput(
+    {
+      prefix: state.values.prefix_input.prefix.value ?? 'release',
+      commit: state.values.commit_input.commit.value ?? '',
+      branch: state.values.branch_input.branch.value ?? 'main',
+      version: state.values.version_input.version.value ?? '',
+      draft: !!state.values.release_toggle.toggles.selected_options.find(
+        (option) => option.value === 'draft',
+      ),
+      preRelease: !!state.values.release_toggle.toggles.selected_options.find(
+        (option) => option.value === 'pre_release',
+      ),
+      dryRun: !!state.values.release_toggle.toggles.selected_options.find(
+        (option) => option.value === 'dry_run',
+      ),
+    },
+    c.env.GITHUB_TOKEN,
+  );
+
+  const errors = validateInput(input, c.env.GITHUB_TOKEN);
 
   return c.text('', 200);
 }

@@ -94,3 +94,9 @@ export interface GithubRelease {
   tag_name: string;
   published_at: string;
 }
+
+export interface GithubCommit {
+  commit: {
+    sha: string;
+  };
+}
