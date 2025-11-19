@@ -307,7 +307,6 @@ export async function sendActiveBugReminder(env: Env) {
                             {
                               type: 'text',
                               text: '⚠️',
-                              emoji: true,
                             },
                           ]
                         : issue.assignees.map((assignee) => ({
