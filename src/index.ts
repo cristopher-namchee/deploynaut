@@ -6,9 +6,9 @@ import { ReleaseCommand } from './const';
 
 import { handleReleaseSubmission } from './interactivity/release';
 
-import { sendActiveBugReminder } from './scheduler/bugs';
-import { sendMessageToChannel } from './scheduler/channel';
-import { sendMessageToPICs } from './scheduler/personal';
+import { sendActiveBugReminder } from './scheduler/bugs/daily';
+import { sendMessageToChannel } from './scheduler/deployment/channel';
+import { sendMessageToPICs } from './scheduler/deployment/personal';
 
 import type { Env, InteractivityPayload } from './types';
 

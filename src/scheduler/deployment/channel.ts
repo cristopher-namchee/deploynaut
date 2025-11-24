@@ -1,5 +1,5 @@
-import { getSchedule, userLookup } from '../lib';
-import type { Env } from '../types';
+import { getSchedule, userLookup } from '../../lib';
+import type { Env } from '../../types';
 
 export async function sendMessageToChannel(env: Env) {
   const today = new Date();
