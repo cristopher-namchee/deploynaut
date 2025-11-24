@@ -56,7 +56,7 @@ export async function userLookup(env: Env, email: string) {
     body: new URLSearchParams({ email }),
   });
 
-  if (!response) {
+  if (!response.ok) {
     return console.error(
       `Cannot find user ${email}. Please check the deployment sheet.`,
     );
