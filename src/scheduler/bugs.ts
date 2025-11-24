@@ -77,23 +77,19 @@ export async function sendActiveBugReminder(env: Env) {
           });
 
           const userData = (await userResponse.json()) as GithubUser;
-          if (!userData.email) {
-            console.log(
-              `User ${userData.login} - ${userData.name} hasn't made their email public yet.`,
-            );
-          }
 
           return userData;
         }),
       );
 
       const slackAssignees = await Promise.all(
-        assigneeData.map(async ({ email }) => {
+        assigneeData.map(async ({ login, email }) => {
           if (!email) {
-            return null;
+            return { found: false, user: login };
           }
 
-          return userLookup(env, email);
+          const slackUser = await userLookup(env, email);
+          return { found: !!slackUser, user: slackUser ?? login };
         }),
       );
 
@@ -103,7 +99,7 @@ export async function sendActiveBugReminder(env: Env) {
         reporter: issue.user.login,
         url: issue.html_url,
         created_at: issue.created_at,
-        assignees: slackAssignees.filter(Boolean),
+        assignees: slackAssignees,
       };
     }),
   );
@@ -309,10 +305,22 @@ export async function sendActiveBugReminder(env: Env) {
                               text: '⚠️',
                             },
                           ]
-                        : issue.assignees.map((assignee) => ({
-                            type: 'user',
-                            user_id: assignee,
-                          })),
+                        : issue.assignees.map((assignee) => {
+                            if (assignee.found) {
+                              return {
+                                type: 'user',
+                                user_id: assignee.user,
+                              };
+                            }
+
+                            return {
+                              type: 'text',
+                              text: assignee.user,
+                              style: {
+                                code: true,
+                              },
+                            };
+                          }),
                   },
                 ],
               },

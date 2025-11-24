@@ -56,10 +56,12 @@ export async function userLookup(env: Env, email: string) {
     body: new URLSearchParams({ email }),
   });
 
-  if (!response) {
-    return console.error(
+  if (!response.ok) {
+    console.error(
       `Cannot find user ${email}. Please check the deployment sheet.`,
     );
+
+    return null;
   }
 
   const { user } = (await response.json()) as { user: { id: string } };
