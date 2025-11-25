@@ -1,7 +1,9 @@
-import { IssueReporter } from '../../const';
-import { getSchedule, userLookup } from '../../lib';
+import { IssueReporter } from '@/const';
 
-import type { Env, GithubIssue, GithubUser } from '../../types';
+import { getSchedule } from '@/lib/sheet';
+import { userLookup } from '@/lib/slack';
+
+import type { Env, GithubIssue, GithubUser } from '@/types';
 
 const GLChatMetadata = {
   owner: 'GDP-ADMIN',
