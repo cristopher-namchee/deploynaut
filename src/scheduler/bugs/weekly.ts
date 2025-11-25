@@ -229,6 +229,55 @@ export async function sendWeeklyBugReport(env: Env) {
             ],
           },
         ],
+        [
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: 'Total',
+                    style: { bold: true },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: weeklyStats?.data.internal.open
+                      .reduce((acc, curr) => acc + curr, 0)
+                      .toString(),
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: weeklyStats?.data.external.open
+                      .reduce((acc, curr) => acc + curr, 0)
+                      .toString(),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       ],
     },
   ];
@@ -460,6 +509,55 @@ export async function sendWeeklyBugReport(env: Env) {
                   {
                     type: 'text',
                     text: weeklyStats?.data.external.closed[3].toString(),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        [
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: 'Total',
+                    style: { bold: true },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: weeklyStats?.data.internal.closed
+                      .reduce((acc, curr) => acc + curr, 0)
+                      .toString(),
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'rich_text',
+            elements: [
+              {
+                type: 'rich_text_section',
+                elements: [
+                  {
+                    type: 'text',
+                    text: weeklyStats?.data.external.closed
+                      .reduce((acc, curr) => acc + curr, 0)
+                      .toString(),
                   },
                 ],
               },
