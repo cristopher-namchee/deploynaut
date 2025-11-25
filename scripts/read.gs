@@ -1,10 +1,16 @@
 const shiftSheet = '18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo';
+const bugsSheet = '1ZGlbEKvVqaP4BL2a81sKSHaBJw11cYxkyKQpCPdPV7A';
+
+const Routes = {
+  '/shift': handleShiftRequest,
+  '/bugs': handleBugsRequest,
+};
 
 function isValidDate(dateLike) {
   return !isNaN(new Date(dateLike).getTime());
 }
 
-function validateParams(params) {
+function validateShiftParams(params) {
   const date = new Date(params.date[0]);
 
   if (!isValidDate(date)) {
@@ -50,7 +56,10 @@ function extractEmail(sheet, row, column) {
 
   formulaCell.clear();
 
-  return email;
+  return {
+    name: range.getValue(),
+    email,
+  };
 }
 
 function getDeploymentPIC(date) {
@@ -74,17 +83,40 @@ function getDeploymentPIC(date) {
   ].filter(email => email !== '#REF!');
 }
 
-function doGet(e) {
-  try {
-    const params = validateParams(e.parameters);
+function handleBugsRequest() {
+  const ss = SpreadsheetApp.openById(bugsSheet);
+  const sheet = ss.getSheets()[4];
 
-    const pics = getDeploymentPIC(params.date);
+  const internalOpen = [
+    sheet.getRange(5, 2).getValue(), sheet.getRange(6, 2).getValue(), sheet.getRange(7, 2).getValue(),
+  ];
+  const externalOpen = [
+    sheet.getRange(5, 4).getValue(), sheet.getRange(6, 4).getValue(), sheet.getRange(7, 4).getValue(),
+  ];
+  const internalClosed = [
+    sheet.getRange(10, 2).getValue(), sheet.getRange(11, 2).getValue(), sheet.getRange(12, 2).getValue(), sheet.getRange(13, 2).getValue(),
+  ];
+  const externalClosed = [
+    sheet.getRange(10, 4).getValue(), sheet.getRange(11, 4).getValue(), sheet.getRange(12, 4).getValue(), sheet.getRange(13, 4).getValue(),
+  ];
 
-    if (pics.length < 3) {
-      const self = Session.getActiveUser().getEmail();
-      
-      GmailApp.sendEmail(self, '🚨 [Deploynaut] Data Warning', '', {
-        htmlBody: `
+  const returnObject = { internal: { open: internalOpen, closed: internalClosed }, external: { open: externalOpen, closed: externalClosed }};
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'success', data: returnObject }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleShiftRequest(parameters) {
+  const params = validateShiftParams(parameters);
+
+  const pics = getDeploymentPIC(params.date);
+
+  if (pics.length < 3) {
+    const self = Session.getActiveUser().getEmail();
+
+    GmailApp.sendEmail(self, '🚨 [Deploynaut] Data Warning', '', {
+      htmlBody: `
         <div style="font-family: Helvetica, Arial, sans-serif; color: #333; line-height: 1.6;">
           <h2>🚨 Failed to read PIC Data</h2>
 
@@ -104,11 +136,23 @@ function doGet(e) {
             This is an automated message from <b>Deploynaut</b>.
           </p>
         </div>`,
-      });
+    });
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'success', data: pics }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  try {
+    const route = e.parameters.route[0];
+
+    if (route in Routes) {
+      return Routes[route](e.parameters);
     }
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'success', data: pics }))
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Route not found' }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService
