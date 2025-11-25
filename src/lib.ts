@@ -25,6 +25,7 @@ export async function getSchedule(env: Env, date: Date) {
     'date',
     `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`,
   );
+  params.set('route', '/shift');
 
   baseUrl.search = params.toString();
 
