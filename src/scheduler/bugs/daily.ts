@@ -1,4 +1,5 @@
 import { IssueReporter } from '@/const';
+import { formatDate } from '@/lib/date';
 
 import { getSchedule } from '@/lib/sheet';
 import { userLookup } from '@/lib/slack';
@@ -119,15 +120,7 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `There are *${bugsWithAssignees.length}* of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${today.toLocaleDateString(
-          'en-GB',
-          {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          },
-        )}*:`,
+        text: `There are *${bugsWithAssignees.length}* of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${formatDate(today)}*:`,
       },
     },
     {

@@ -1,6 +1,8 @@
 import { IssueReporter } from '@/const';
+import { formatDate } from '@/lib/date';
+import { getWeeklyBugList } from '@/lib/sheet';
 
-import type { Env, GithubIssue, GithubUser } from '@/types';
+import type { Env } from '@/types';
 
 const GLChatMetadata = {
   owner: 'GDP-ADMIN',
@@ -12,13 +14,20 @@ const IssueReporterMap = {
   [IssueReporter.Sentry]: 'Sentry',
 };
 
-export async function sendActiveBugReminder(env: Env) {
+export async function sendWeeklyBugReport(env: Env) {
+  const weeklyStats = await getWeeklyBugList(env);
+
+  // should be Saturday
+  const today = new Date();
+  const prevSunday = new Date(today);
+  prevSunday.setDate(today.getDate() - 6);
+
   const blocks = [
     {
       type: 'header',
       text: {
         type: 'plain_text',
-        text: '🐛 GLChat Active Bug List',
+        text: '📊 GLChat Weekly Bug Report',
         emoji: true,
       },
     },
@@ -26,15 +35,7 @@ export async function sendActiveBugReminder(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `There are *${bugsWithAssignees.length}* of <https://github.com/GDP-ADMIN/glchat/issues|currently active bugs in GLChat> per *${today.toLocaleDateString(
-          'en-GB',
-          {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          },
-        )}*:`,
+        text: `Below is the curated report of <https://github.com/GDP-ADMIN/glchat/issues|active bugs in GLChat> from *${formatDate(prevSunday)}* until *${formatDate(today)}*`,
       },
     },
   ];

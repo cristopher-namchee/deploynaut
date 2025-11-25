@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/date';
 import { getSchedule } from '@/lib/sheet';
 import { userLookup } from '@/lib/slack';
 
@@ -21,15 +22,7 @@ export async function sendMessageToPICs(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `Hello! This is a friendly reminder that you are the deployment PIC for *${today.toLocaleDateString(
-          'en-GB',
-          {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          },
-        )}*`,
+        text: `Hello! This is a friendly reminder that you are the deployment PIC for *${formatDate(today)}}*`,
       },
     },
     {
