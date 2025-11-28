@@ -5,27 +5,6 @@ export interface Env {
   GITHUB_TOKEN: string;
 }
 
-export interface GithubUser {
-  login: string;
-  name: string;
-  email: string | null;
-}
-
-export interface GithubIssue {
-  number: number;
-  title: string;
-  html_url: string;
-  created_at: string;
-  user: {
-    login: string;
-  };
-  assignees?: {
-    id: number;
-    url: string;
-    nodeid: number;
-  }[];
-}
-
 type Interactivity =
   | 'view_submission'
   | 'block_actions'
