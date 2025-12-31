@@ -131,6 +131,10 @@ export async function sendMessageToPICs(env: Env) {
       pics.map(async (pic) => {
         const userId = await userLookup(env, pic.email);
 
+        if (!userId) {
+          return Promise.resolve();
+        }
+
         await fetch('https://slack.com/api/chat.postMessage', {
           method: 'POST',
           headers: {
