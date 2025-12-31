@@ -168,10 +168,15 @@ export async function sendMessageToChannel(env: Env) {
                 {
                   type: 'rich_text_section',
                   elements: [
-                    {
-                      type: 'user',
-                      user_id: pics[0],
-                    },
+                    pics[0]
+                      ? {
+                          type: 'user',
+                          user_id: pics[0],
+                        }
+                      : {
+                          type: 'text',
+                          text: '⚠️',
+                        },
                   ],
                 },
               ],
@@ -182,10 +187,15 @@ export async function sendMessageToChannel(env: Env) {
                 {
                   type: 'rich_text_section',
                   elements: [
-                    {
-                      type: 'user',
-                      user_id: pics[1],
-                    },
+                    pics[1]
+                      ? {
+                          type: 'user',
+                          user_id: pics[1],
+                        }
+                      : {
+                          type: 'text',
+                          text: '⚠️',
+                        },
                   ],
                 },
               ],
@@ -196,10 +206,15 @@ export async function sendMessageToChannel(env: Env) {
                 {
                   type: 'rich_text_section',
                   elements: [
-                    {
-                      type: 'user',
-                      user_id: pics[2],
-                    },
+                    pics[2]
+                      ? {
+                          type: 'user',
+                          user_id: pics[2],
+                        }
+                      : {
+                          type: 'text',
+                          text: '⚠️',
+                        },
                   ],
                 },
               ],
