@@ -32,11 +32,11 @@ function columnToLetter(column) {
   return letter;
 }
 
-function extractEmail(sheet, row, column) {
+function extractEntity(sheet, row, column) {
   // get the range
   const range = sheet.getRange(row, column);
 
-  const dummyColumn = sheet.getLastColumn() + 2;
+  const dummyColumn = sheet.getLastColumn() + 4;
 
   // write email formula to dummy column
   const formulaCell = sheet.getRange(row, dummyColumn);
@@ -52,7 +52,7 @@ function extractEmail(sheet, row, column) {
 
   return {
     name: range.getValue(),
-    email,
+    email: email === '#REF!' ? '' : email,
   };
 }
 
@@ -69,29 +69,30 @@ function getDeploymentPIC(date) {
 
   // add 2, since we truncate the header column and convert it to 0-based index
   return [
-    extractEmail(sheet, targetRow, 2),
-    extractEmail(sheet, targetRow, 3),
-    extractEmail(sheet, targetRow, 4),
-    extractEmail(sheet, targetRow, 5),
-    extractEmail(sheet, targetRow, 6),
-  ].filter(email => email !== '#REF!');
+    extractEntity(sheet, targetRow, 2),
+    extractEntity(sheet, targetRow, 3),
+    extractEntity(sheet, targetRow, 4),
+    extractEntity(sheet, targetRow, 5),
+    extractEntity(sheet, targetRow, 6),
+  ];
 }
 
 function doGet(e) {
   try {
-    const params = validateParams(parameters);
+    const params = validateParams(e.parameters);
 
-    const pics = getDeploymentPIC(params.date);
+    const pics = getDeploymentPIC(params);
+    const hasEmptyData = pics.some(pic => !pic.email);
 
-    if (pics.length < 3) {
+    if (hasEmptyData) {
       const self = Session.getActiveUser().getEmail();
 
-      GmailApp.sendEmail(self, '🚨 [Deploynaut] Data Warning', '', {
+      GmailApp.sendEmail(self, '⚠️ [Deploynaut] Data Warning', '', {
         htmlBody: `
         <div style="font-family: Helvetica, Arial, sans-serif; color: #333; line-height: 1.6;">
-          <h2>🚨 Failed to read PIC Data</h2>
+          <h2>⚠️ Failed to read PIC Data</h2>
 
-          <p><b>Deploynaut</b> failed to read PIC's email. Possible causes are:</p>
+          <p><b>Deploynaut</b> failed to read PIC's email completely. Possible causes are:</p>
 
           <ul>
             <li>PIC names are not defined inside a <a href="https://support.google.com/docs/answer/12319513?hl=en">smart chip</a></li>

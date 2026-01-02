@@ -3,16 +3,7 @@ interface Employee {
   email: string;
 }
 
-interface BugReport {
-  open: [number, number, number];
-  closed: [number, number, number, number];
-}
-
 type ShiftData = [Employee, Employee, Employee, Employee, Employee];
-type BugsData = {
-  internal: BugReport;
-  external: BugReport;
-};
 
 interface SuccessResponse<T> {
   status: 'success';
@@ -26,7 +17,10 @@ interface ErrorResponse {
 
 type AppsScriptResponse<T = undefined> = SuccessResponse<T> | ErrorResponse;
 
-export async function getSchedule(env: Env, date: Date) {
+export async function getSchedule(
+  env: Env,
+  date: Date,
+): Promise<ShiftData | null> {
   const url = new URL(env.SCRIPT_URL);
   const params = new URLSearchParams();
 
@@ -52,5 +46,7 @@ export async function getSchedule(env: Env, date: Date) {
     return body.data;
   } catch (err) {
     console.error('Failed to fetch schedule due to the following error: ', err);
+
+    return null;
   }
 }
