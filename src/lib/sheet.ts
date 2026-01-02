@@ -35,12 +35,20 @@ export async function getSchedule(
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`AppsScript returned ${response.status}`);
+      console.error(
+        `Failed to fetch schedule data. AppsScript returned ${response.status}.`,
+      );
+
+      return null;
     }
 
     const body = (await response.json()) as AppsScriptResponse<ShiftData>;
     if (body.status === 'failed') {
-      throw new Error(body.message);
+      console.error(
+        `Failed to fetch schedule data. AppsScript encountered error: ${body.message}.`,
+      );
+
+      return null;
     }
 
     return body.data;
