@@ -81,11 +81,11 @@ function doGet(e) {
   try {
     const params = validateParams(e.parameters);
 
-    const pics = getDeploymentPIC(params);
+    const pics = getDeploymentPIC(params.date);
     const hasEmptyData = pics.some(pic => !pic.email);
 
     if (hasEmptyData) {
-      const self = Session.getActiveUser().getEmail();
+      const self = Session.getEffectiveUser().getEmail();
 
       GmailApp.sendEmail(self, '⚠️ [Deploynaut] Data Warning', '', {
         htmlBody: `
