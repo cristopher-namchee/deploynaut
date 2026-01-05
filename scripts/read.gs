@@ -1,3 +1,8 @@
+// TODO: should this be envvar?
+const EmailRecipients = [
+  'marcel.leonardo@gdplabs.id',
+];
+
 const shiftSheet = '18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo';
 
 function isValidDate(dateLike) {
@@ -86,8 +91,9 @@ function doGet(e) {
 
     if (hasEmptyData) {
       const self = Session.getEffectiveUser().getEmail();
+      const recipients = [self, ...EmailRecipients].join(',');
 
-      GmailApp.sendEmail(self, '⚠️ [Deploynaut] Data Warning', '', {
+      GmailApp.sendEmail(recipients, '⚠️ [Deploynaut] Data Warning', '', {
         htmlBody: `
         <div style="font-family: Helvetica, Arial, sans-serif; color: #333; line-height: 1.6;">
           <h2>⚠️ Failed to read PIC Data</h2>
@@ -108,6 +114,8 @@ function doGet(e) {
             This is an automated message from <b>Deploynaut</b>.
           </p>
         </div>`,
+        name: 'Deploynaut',
+        replyTo: 'cristopher@gdplabs.id',
       });
     }
 
@@ -115,6 +123,27 @@ function doGet(e) {
       .createTextOutput(JSON.stringify({ status: 'success', data: pics }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
+    GmailApp.sendEmail(self, '❌ [Deploynaut] Error', '', {
+      htmlBody: `
+        <div style="font-family: Helvetica, Arial, sans-serif; color: #333; line-height: 1.6;">
+          <h2>❌ Failed to execute</h2>
+
+          <p><b>Deploynaut</b> failed to execute due to:</p>
+
+          <div style="background-color: #f8d7da; border: 1px solid #f5c2c7; padding: 10px 15px; border-radius: 6px; margin: 10px 0;">
+            <pre style="margin: 0; font-family: Consolas, monospace; white-space: pre-wrap;">${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}</pre>
+          </div>
+
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+
+          <p style="font-size: 13px; color: #666;">
+            This is an automated message from <b>Deploynaut</b>.
+          </p>
+        </div>`,
+      name: 'Deploynaut',
+      replyTo: 'cristopher@gdplabs.id',
+    });
+
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: `Script failed to execute due to: ${err.message}` }))
       .setMimeType(ContentService.MimeType.JSON);
