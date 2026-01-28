@@ -27,3 +27,7 @@ export interface ReleasePayload extends InteractivityPayload {
     callback_id: string;
   };
 }
+
+export interface GoogleAuthResponse {
+  access_token: string;
+}
