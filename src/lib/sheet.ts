@@ -1,3 +1,5 @@
+import type { Env } from '@/types';
+
 interface Employee {
   name: string;
   email: string;
