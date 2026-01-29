@@ -1,6 +1,12 @@
 import { JWT } from '@/const';
 
-import type { GoogleAuthResponse } from '@/types';
+interface GoogleAuthResponse {
+  access_token: string;
+}
+
+interface GoogleUserAPIResponse {
+  name: string;
+}
 
 function b64(input: ArrayBuffer | string) {
   const bytes =
@@ -63,7 +69,7 @@ export async function getGoogleAuthToken(
     const key = await crypto.subtle.importKey(
       'pkcs8',
       pemToArrayBuffer(pem),
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-512' },
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
       false,
       ['sign'],
     );
@@ -100,6 +106,57 @@ export async function getGoogleAuthToken(
     return body.access_token;
   } catch (err) {
     console.error('Failed to get access token from Google:', err);
+
+    return '';
+  }
+}
+
+/**
+ * Get Google Space user ID by email.
+ *
+ * @param {string} email User e-mail
+ * @param {string} space Google space ID
+ * @param {string} token Google access token that contains People API scopes
+ * @returns {Promise<string>} Resolves into a string. If the user is not found, it will
+ * resolve into an empty string.
+ */
+export async function getUserIdByEmail(
+  email: string,
+  space: string,
+  token: string,
+): Promise<string> {
+  try {
+    if (!email) {
+      return '';
+    }
+
+    const url = new URL(
+      `/v1/spaces/${space}/members/${email}`,
+      'https://chat.googleapis.com',
+    );
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Response returned ${response.status}`);
+    }
+
+    const data = (await response.json()) as GoogleUserAPIResponse;
+    if (!data.name) {
+      return '';
+    }
+
+    const [_space, _spaceId, _member, id] = data.name.split('/');
+
+    return `users/${id}`;
+  } catch (err) {
+    console.error('Failed to get Google user ID:', err);
 
     return '';
   }

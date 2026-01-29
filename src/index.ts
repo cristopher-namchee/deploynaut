@@ -1,49 +1,14 @@
-import { type Context, Hono } from 'hono';
-
-import { spawnReleaseDialog } from './commands/release';
-
-import { ReleaseCommand } from './const';
-
-import { handleReleaseSubmission } from './interactivity/release';
-
 import { sendMessageToChannel } from './scheduler/channel';
 import { sendMessageToPICs } from './scheduler/personal';
 
-import type { Env, InteractivityPayload } from './types';
+import type { Env } from './types';
 
 const schedules: Record<string, (env: Env) => Promise<void>> = {
   '0 5 * * 2-6': sendMessageToPICs,
   '30 8 * * 2-6': sendMessageToChannel,
 };
 
-const interactivity: Record<
-  string,
-  (payload: any, c: Context<{ Bindings: Env }>) => Promise<Response>
-> = {
-  [ReleaseCommand.InteractiveEvent]: handleReleaseSubmission,
-};
-
-const app = new Hono<{ Bindings: Env }>();
-
-app.post('/commands/release', spawnReleaseDialog);
-app.post('/interactivity', async (c) => {
-  const body = (await c.req.parseBody()) as unknown as InteractivityPayload;
-
-  const eventTokens: string[] = [body.type];
-  if (body.view) {
-    eventTokens.push(body.view.type);
-  }
-  const event = eventTokens.join(':');
-
-  if (!(event in interactivity)) {
-    return c.notFound();
-  }
-
-  await interactivity[event](body, c);
-});
-
 export default {
-  fetch: app.fetch,
   scheduled: async (
     ctrl: ScheduledController,
     env: Env,

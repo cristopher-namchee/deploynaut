@@ -1,9 +1,17 @@
+import { getGoogleAuthToken } from '@/lib/google';
 import { getSchedule } from '@/lib/sheet';
-import { userLookup } from '@/lib/slack';
 
 import type { Env } from '@/types';
 
 export async function sendMessageToChannel(env: Env) {
+  const token = getGoogleAuthToken(
+    env.SERVICE_ACCOUNT_EMAIL,
+    env.SERVICE_ACCOUNT_PRIVATE_KEY,
+  );
+  if (!token) {
+    return;
+  }
+
   const today = new Date();
 
   const blocks: Record<string, unknown>[] = [
@@ -260,7 +268,7 @@ export async function sendMessageToChannel(env: Env) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      channel: env.SLACK_CHANNEL,
+      channel: env.DAILY_GOOGLE_SPACE,
       blocks,
     }),
   });

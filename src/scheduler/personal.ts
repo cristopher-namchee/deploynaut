@@ -1,6 +1,5 @@
 import { formatDate } from '@/lib/date';
 import { getSchedule } from '@/lib/sheet';
-import { userLookup } from '@/lib/slack';
 
 import type { Env } from '@/types';
 
@@ -9,12 +8,18 @@ export async function sendMessageToPICs(env: Env) {
 
   const schedule = await getSchedule(env, today);
 
+  const text = `## 🔔 GLChat Daily Release PIC Reminder
+  
+Hello! This is a friendly reminder that you are the deployment PIC for *${formatDate(today)}}*
+
+<`
+
   const blocks = [
     {
       type: 'header',
       text: {
         type: 'plain_text',
-        text: '🔔 GLChat Daily Release PIC Reminder',
+        text: '',
         emoji: true,
       },
     },
@@ -22,7 +27,7 @@ export async function sendMessageToPICs(env: Env) {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `Hello! This is a friendly reminder that you are the deployment PIC for *${formatDate(today)}}*`,
+        text: ``,
       },
     },
     {
@@ -129,7 +134,7 @@ export async function sendMessageToPICs(env: Env) {
     // exclude daily bug PIC for now.
     await Promise.all(
       pics.map(async (pic) => {
-        const userId = await userLookup(env, pic.email);
+        const userId = 
 
         if (!userId) {
           return Promise.resolve();
