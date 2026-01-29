@@ -26,7 +26,7 @@ export async function sendMessageToChannel(env: Env) {
         },
         body: JSON.stringify({
           text: `🔔 *GLChat Daily Release Reminder*
-          
+
 ⚠️ _Script encountered error when fetching schedule data. Please check the execution logs._`,
         }),
       },
@@ -51,7 +51,7 @@ export async function sendMessageToChannel(env: Env) {
       },
       body: JSON.stringify({
         text: `🔔 *GLChat Daily Release Reminder*
-          
+
 <users/all>, it's 30 minutes to GLChat Daily Release cutoff time.
 
 ✅ *Things to prepare before release:*
