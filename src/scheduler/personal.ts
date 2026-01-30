@@ -17,7 +17,7 @@ export async function sendMessageToPICs(env: Env) {
   const schedule = await getSchedule(env, today);
 
   const text = `🔔 *GLChat Daily Release PIC Reminder*
-  
+
 Hello {user}! This is a friendly reminder that you are the deployment PIC for *${formatDate(today)}*
 
 To ensure today's deployment goes smoothly, here are some steps that you can take to prepare for the deployment:
@@ -45,7 +45,7 @@ _Good luck during the deployment!_`;
           return;
         }
 
-        await fetch(
+        const response = await fetch(
           `https://chat.googleapis.com/v1/spaces/${env.DAILY_GOOGLE_SPACE}/messages`,
           {
             method: 'POST',
@@ -61,6 +61,16 @@ _Good luck during the deployment!_`;
             }),
           },
         );
+
+        if (!response.ok) {
+          const body = await response.json();
+
+          console.error(body);
+
+          throw new Error(
+            `Failed to send 'direct message' to channel. Response returned ${response.status}`,
+          );
+        }
       }),
     );
   }
