@@ -68,7 +68,7 @@ _Good luck during the deployment!_`;
           console.error(body);
 
           throw new Error(
-            `Failed to send 'direct message' to channel. Response returned ${response.status}`,
+            `Failed to send 'direct message' to channel for ${pic.email}. Response returned ${response.status}`,
           );
         }
       }),

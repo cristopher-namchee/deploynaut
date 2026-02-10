@@ -1,9 +1,9 @@
-// TODO: should this be envvar?
-const EmailRecipients = [
-  'marcel.leonardo@gdplabs.id',
-];
+const EmailRecipients = ["marcel.leonardo@gdplabs.id"];
 
-const shiftSheet = '18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo';
+const shiftSheet = "18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo";
+
+// add 7, since we truncate the header column and convert it to 0-based index
+const RowOffset = 7;
 
 function isValidDate(dateLike) {
   return !isNaN(new Date(dateLike).getTime());
@@ -13,7 +13,7 @@ function validateParams(params) {
   const date = new Date(params.date[0]);
 
   if (!isValidDate(date)) {
-    throw new Error('Date is not a valid date');
+    throw new Error("Date is not a valid date");
   }
 
   return {
@@ -26,7 +26,7 @@ function formatDate(date) {
 }
 
 function columnToLetter(column) {
-  let letter = '';
+  let letter = "";
 
   while (column > 0) {
     const remainder = (column - 1) % 26;
@@ -57,7 +57,7 @@ function extractEntity(sheet, row, column) {
 
   return {
     name: range.getValue(),
-    email: email === '#REF!' ? '' : email,
+    email: email === "#REF!" ? "" : email,
   };
 }
 
@@ -67,12 +67,16 @@ function getDeploymentPIC(date) {
 
   const lastRow = sheet.getLastRow();
 
-  const rows = sheet.getRange(2, 1, lastRow);
-  const values = rows.getValues().flat().filter(val => val instanceof Date).map(date => formatDate(date));
+  const rows = sheet.getRange(RowOffset, 1, lastRow);
+  const values = rows
+    .getValues()
+    .flat()
+    .filter((val) => val instanceof Date)
+    .map((date) => formatDate(date));
 
-  const targetRow = values.findIndex(value => value === formatDate(date)) + 2;
+  const targetRow =
+    values.findIndex((value) => value === formatDate(date)) + RowOffset;
 
-  // add 2, since we truncate the header column and convert it to 0-based index
   return [
     extractEntity(sheet, targetRow, 2),
     extractEntity(sheet, targetRow, 3),
@@ -83,17 +87,18 @@ function getDeploymentPIC(date) {
 }
 
 function doGet(e) {
+  const self = Session.getEffectiveUser().getEmail();
+
   try {
     const params = validateParams(e.parameters);
 
     const pics = getDeploymentPIC(params.date);
-    const hasEmptyData = pics.some(pic => !pic.email);
+    const hasEmptyData = pics.some((pic) => !pic.email);
 
     if (hasEmptyData) {
-      const self = Session.getEffectiveUser().getEmail();
-      const recipients = [self, ...EmailRecipients].join(',');
+      const recipients = [self, ...EmailRecipients].join(",");
 
-      GmailApp.sendEmail(recipients, '⚠️ [Deploynaut] Data Warning', '', {
+      GmailApp.sendEmail(recipients, "⚠️ [Deploynaut] Data Warning", "", {
         htmlBody: `
         <div style="font-family: Helvetica, Arial, sans-serif; color: #333; line-height: 1.6;">
           <h2>⚠️ Failed to read PIC Data</h2>
@@ -114,16 +119,16 @@ function doGet(e) {
             This is an automated message from <b>Deploynaut</b>.
           </p>
         </div>`,
-        name: 'Deploynaut',
-        replyTo: 'cristopher@gdplabs.id',
+        name: "Deploynaut",
+        replyTo: "cristopher@gdplabs.id",
       });
     }
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'success', data: pics }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify({ status: "success", data: pics }),
+    ).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
-    GmailApp.sendEmail(self, '❌ [Deploynaut] Error', '', {
+    GmailApp.sendEmail(self, "❌ [Deploynaut] Error", "", {
       htmlBody: `
         <div style="font-family: Helvetica, Arial, sans-serif; color: #333; line-height: 1.6;">
           <h2>❌ Failed to execute</h2>
@@ -140,12 +145,15 @@ function doGet(e) {
             This is an automated message from <b>Deploynaut</b>.
           </p>
         </div>`,
-      name: 'Deploynaut',
-      replyTo: 'cristopher@gdplabs.id',
+      name: "Deploynaut",
+      replyTo: "cristopher@gdplabs.id",
     });
 
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'error', message: `Script failed to execute due to: ${err.message}` }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        status: "error",
+        message: `Script failed to execute due to: ${err.message}`,
+      }),
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
