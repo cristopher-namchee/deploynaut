@@ -12,8 +12,8 @@
 	},
 	"triggers": {
 		"crons": [
-			// "0 5 * * 2-6", // personal message
-			// "30 8 * * 2-6", // channel message
+			"0 5 * * 2-6", // personal message
+			"30 8 * * 2-6", // channel message
 		]
 	},
 	"keep_vars": true
