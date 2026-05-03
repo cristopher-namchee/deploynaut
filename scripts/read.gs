@@ -93,11 +93,11 @@ function isExcluded(date) {
 
   const targetRow = getRowByDate(sheet, date);
 
-  const sampleCell = sheet.getRange(targetRow, 1);
+  const sampleCell = sheet.getRange(targetRow, 10);
   const hex = sampleCell.getBackground();
 
   // TODO: add more values?
-  return ['#f4cccc', '#ea9999'].includes(hex);
+  return ['#f4cccc', '#ea9999', '#ff0000'].includes(hex);
 }
 
 function doGet(e) {
