@@ -16,6 +16,15 @@ export async function sendMessageToPICs(env: Env) {
   const today = new Date();
   const schedule = await getSchedule(env, today);
 
+  if (!schedule) {
+    return;
+  }
+
+  const { pics, holiday } = schedule;
+  if (holiday) {
+    return;
+  }
+
   const text = `🔔 *GLChat Daily Release PIC Reminder*
 
 Hello {user}! This is a friendly reminder that you are the deployment PIC for *${formatDate(today)}*
@@ -30,11 +39,11 @@ To ensure today's deployment goes smoothly, here are some steps that you can tak
 _Good luck during the deployment!_`;
 
   if (schedule) {
-    const pics = [schedule[1], schedule[2], schedule[4]];
+    const employees = [pics[1], pics[2], pics[4]];
 
     // exclude daily bug PIC
     await Promise.all(
-      pics.map(async (pic) => {
+      employees.map(async (pic) => {
         const userId = await getUserIdByEmail(
           pic.email,
           env.DAILY_GOOGLE_SPACE,

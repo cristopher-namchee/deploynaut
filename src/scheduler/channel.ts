@@ -35,8 +35,14 @@ export async function sendMessageToChannel(env: Env) {
     return;
   }
 
-  const pics = await Promise.all(
-    [schedule[1], schedule[2], schedule[4], schedule[3]].map((pic) =>
+  const { pics, holiday } = schedule;
+
+  if (holiday) {
+    return;
+  }
+
+  const employees = await Promise.all(
+    [pics[1], pics[2], pics[4], pics[3]].map((pic) =>
       getUserIdByEmail(pic.email, env.DAILY_GOOGLE_SPACE, token),
     ),
   );
@@ -63,10 +69,10 @@ _Please notify us on *this thread* if you need additional time for daily cutoff_
 
 👨‍💼 *Persons in Charge*
 
-PM: ${pics[0] ? `<${pics[0]}>` : '⚠️'}
-Engineer: ${pics[1] ? `<${pics[1]}>` : '⚠️'}
-QA: ${pics[2] ? `<${pics[2]}>` : '⚠️'}
-Infra: ${schedule[3] ? `<${pics[3]}>` : '⚠️'}`,
+PM: ${employees[0].length ? `<${employees[0]}>` : '⚠️'}
+Engineer: ${employees[1].length ? `<${employees[1]}>` : '⚠️'}
+QA: ${employees[2].length ? `<${employees[2]}>` : '⚠️'}
+Infra: ${employees[3].length ? `<${employees[3]}>` : '⚠️'}`,
       }),
     },
   );

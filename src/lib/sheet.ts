@@ -5,7 +5,10 @@ interface Employee {
   email: string;
 }
 
-type ShiftData = [Employee, Employee, Employee, Employee, Employee];
+interface ShiftData {
+  pics: [Employee, Employee, Employee, Employee, Employee];
+  holiday: boolean;
+}
 
 interface SuccessResponse<T> {
   status: 'success';
