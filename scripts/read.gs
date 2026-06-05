@@ -87,7 +87,7 @@ function getDeploymentPIC(date) {
   ];
 }
 
-function isExcluded(date) {
+function isHoliday(date) {
   const ss = SpreadsheetApp.openById(shiftSheet);
   const sheet = ss.getSheets()[1];
 
@@ -107,12 +107,13 @@ function doGet(e) {
     const params = validateParams(e.parameters);
 
     const pics = getDeploymentPIC(params.date);
-    // if it's weekend or excluded, it should have at least daily bug PIC only
+    // if it's weekend or holiday, it should have at least daily bug PIC only
     const hasMissingData = [0, 6].includes(params.date.getDay())
       ? pics[0] === ''
       : pics.some(pic => !pic.email);
+    const holiday = isHoliday(params.date);
 
-    if (hasMissingData && !isExcluded(params.date)) {
+    if (hasMissingData && !holiday) {
       const recipients = [self, ...EmailRecipients].join(',');
 
       GmailApp.sendEmail(recipients, '⚠️ [Deploynaut] Data Warning', '', {
@@ -142,7 +143,7 @@ function doGet(e) {
     }
 
     return ContentService
-      .createTextOutput(JSON.stringify({ status: 'success', data: pics }))
+      .createTextOutput(JSON.stringify({ status: 'success', data: { pics, holiday } }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     console.error(err);
