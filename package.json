@@ -11,6 +11,7 @@
 		"test": "vitest"
 	},
 	"dependencies": {
+		"@googleapis/sheets": "^13.0.2",
 		"hono": "^4.10.1"
 	},
 	"devDependencies": {

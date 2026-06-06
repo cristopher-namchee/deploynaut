@@ -1,4 +1,5 @@
-import { JWT } from '@/const';
+import { auth, sheets } from '@googleapis/sheets';
+import { JWT, SpreadsheetID } from '@/const';
 
 interface GoogleAuthResponse {
   access_token: string;
@@ -110,6 +111,20 @@ export async function getGoogleAuthToken(
 
     return '';
   }
+}
+
+export async function getSchedule(email: string, key: string) {
+  const token = new auth.JWT({
+    email,
+    key: key.replace(/\\n/gm, '\n'),
+    scopes: JWT.Scopes,
+  });
+  const accessToken = await token.getAccessToken();
+
+  const scheduleSheet = await sheets('v4').spreadsheets.get({
+    spreadsheetId: SpreadsheetID,
+    access_token: accessToken.token as string,
+  });
 }
 
 /**
