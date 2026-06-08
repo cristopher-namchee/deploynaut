@@ -1,4 +1,4 @@
-import { auth, sheets } from '@googleapis/sheets';
+import { auth, sheets, type sheets_v4 } from '@googleapis/sheets';
 import { JWT, SpreadsheetID } from '@/const';
 
 interface GoogleAuthResponse {
@@ -113,6 +113,37 @@ export async function getGoogleAuthToken(
   }
 }
 
+function formatDate(date: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+}
+
+async function getRowByDate(token: string, sheetName: string, date: Date) {
+  const response = await sheets('v4').spreadsheets.values.get({
+    spreadsheetId: SpreadsheetID,
+    access_token: token,
+    range: `${sheetName}!A${7}:A`,
+    valueRenderOption: 'FORMATTED_VALUE',
+  });
+
+  const rows = response.data.values;
+
+  if (!rows || rows.length === 0) {
+    return -1;
+  }
+
+  const values = rows.flat();
+
+  const formattedTargetDate = formatDate(date);
+  const matchIndex = values.indexOf(formattedTargetDate);
+
+  return matchIndex !== -1 ? matchIndex + 7 : -1;
+}
+
 export async function getSchedule(email: string, key: string) {
   const token = new auth.JWT({
     email,
@@ -121,10 +152,12 @@ export async function getSchedule(email: string, key: string) {
   });
   const accessToken = await token.getAccessToken();
 
-  const scheduleSheet = await sheets('v4').spreadsheets.get({
-    spreadsheetId: SpreadsheetID,
-    access_token: accessToken.token as string,
-  });
+  const targetRow = await getRowByDate(
+    accessToken.token!,
+    'Piket GLChat Ceria Automation',
+    new Date(),
+  );
+  console.log(targetRow);
 }
 
 /**
