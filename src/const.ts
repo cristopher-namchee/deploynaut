@@ -3,11 +3,6 @@ export const IssueReporter = {
   Sentry: 'sentry[bot]',
 };
 
-export const ReleaseCommand = {
-  CallbackID: 'release',
-  InteractiveEvent: 'view_submission:release',
-};
-
 export const JWT = {
   Scopes: [
     'https://www.googleapis.com/auth/chat.messages.create',
@@ -20,3 +15,5 @@ export const JWT = {
 };
 
 export const SpreadsheetID = '18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo';
+
+export const HolidayBackgrounds = ['#f4cccc', '#ea9999', '#ff0000'];

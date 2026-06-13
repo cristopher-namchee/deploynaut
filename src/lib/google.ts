@@ -232,7 +232,14 @@ async function getPICFromRow(token: string, row: number): Promise<PIC | null> {
   }
 }
 
-export async function getSchedule(email: string, key: string) {
+export async function isHoliday(row: number): Promise<boolean> {
+  const sampleRange = await sheets('v4').spreadsheets.values.get(), options)
+}
+
+export async function getSchedule(
+  email: string,
+  key: string,
+): Promise<PIC | null> {
   const jwt = new auth.JWT({
     email,
     key: key.replace(/\\n/gm, '\n'),
@@ -243,7 +250,7 @@ export async function getSchedule(email: string, key: string) {
   if (!creds.token) {
     console.error('Failed to get credentials from service account');
 
-    return [null, null, null, null, null];
+    return null;
   }
 
   const targetRow = await getRowByDate(creds.token, new Date());
