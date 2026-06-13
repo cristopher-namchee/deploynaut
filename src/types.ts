@@ -8,29 +8,13 @@ export interface Env {
   SERVICE_ACCOUNT_PRIVATE_KEY: string;
 }
 
-type Interactivity =
-  | 'view_submission'
-  | 'block_actions'
-  | 'shortcut'
-  | 'message_actions'
-  | 'view_closed';
-
-export interface InteractivityPayload {
-  type: Interactivity;
-  view: {
-    type: string;
-    callback_id: string;
-  };
-}
-
-export interface ReleasePayload extends InteractivityPayload {
-  type: 'view_submission';
-  view: {
-    type: 'modal';
-    callback_id: string;
-  };
-}
-
 export interface GoogleAuthResponse {
   access_token: string;
 }
+
+export interface Employee {
+  name: string;
+  email: string;
+}
+
+export type PIC = [Employee, Employee, Employee, Employee, Employee];

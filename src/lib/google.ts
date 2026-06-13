@@ -1,5 +1,6 @@
 import { auth, sheets, type sheets_v4 } from '@googleapis/sheets';
 import { JWT, SpreadsheetID } from '@/const';
+import type { Employee, PIC } from '@/types';
 
 interface GoogleAuthResponse {
   access_token: string;
@@ -122,11 +123,15 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-async function getRowByDate(token: string, sheetName: string, date: Date) {
+function columnToLetter(column: number): string {
+  return String.fromCharCode(column + 64);
+}
+
+async function getRowByDate(token: string, date: Date) {
   const response = await sheets('v4').spreadsheets.values.get({
     spreadsheetId: SpreadsheetID,
     access_token: token,
-    range: `${sheetName}!A${7}:A`,
+    range: `A${7}:A`,
     valueRenderOption: 'FORMATTED_VALUE',
   });
 
@@ -144,20 +149,106 @@ async function getRowByDate(token: string, sheetName: string, date: Date) {
   return matchIndex !== -1 ? matchIndex + 7 : -1;
 }
 
+async function getPICFromRow(token: string, row: number): Promise<PIC | null> {
+  const dataToUpdate = [];
+  const rangesToGet = [];
+  const rangesToClear = [];
+
+  for (let i = 0; i < 5; i++) {
+    const dummyColumnLetter = columnToLetter(10 + i);
+    const dummyRange = `${dummyColumnLetter}${row}`;
+
+    const targetColumnLetter = columnToLetter(i + 2);
+    const formula = `=${targetColumnLetter}${row}.email`;
+
+    dataToUpdate.push({
+      range: dummyRange,
+      values: [[formula]],
+    });
+
+    rangesToGet.push(dummyRange);
+    rangesToClear.push(dummyRange);
+  }
+
+  rangesToGet.push(`B${row}:F${row}`);
+
+  const client = sheets('v4').spreadsheets.values;
+
+  try {
+    await client.batchUpdate({
+      spreadsheetId: SpreadsheetID,
+      access_token: token,
+      requestBody: {
+        valueInputOption: 'USER_ENTERED',
+        data: dataToUpdate,
+      },
+    });
+
+    const response = await client.batchGet({
+      spreadsheetId: SpreadsheetID,
+      access_token: token,
+      ranges: rangesToGet,
+    });
+
+    await client.batchClear({
+      spreadsheetId: SpreadsheetID,
+      access_token: token,
+      requestBody: {
+        ranges: rangesToClear,
+      },
+    });
+
+    const valueRanges = response.data.valueRanges;
+    if (!valueRanges) {
+      throw new Error(
+        `Failed to get data from B${row}:F${row}, range doesn't exist.`,
+      );
+    }
+
+    const users: Employee[] = [];
+
+    for (let idx = 0; idx < 5; idx++) {
+      const currentRange = valueRanges[idx];
+      const lastRange = valueRanges[valueRanges.length - 1];
+
+      if (!currentRange?.values || !lastRange?.values) {
+        throw new Error('Something went wrong with the ranges');
+      }
+
+      const email = currentRange.values[0][0] as string;
+      const name = lastRange.values[0][idx] as string;
+
+      users.push({
+        email: email === '#REF!' ? '' : email,
+        name,
+      });
+    }
+
+    return users as PIC;
+  } catch (err) {
+    console.error(err);
+
+    return null;
+  }
+}
+
 export async function getSchedule(email: string, key: string) {
-  const token = new auth.JWT({
+  const jwt = new auth.JWT({
     email,
     key: key.replace(/\\n/gm, '\n'),
     scopes: JWT.Scopes,
   });
-  const accessToken = await token.getAccessToken();
+  const creds = await jwt.getAccessToken();
 
-  const targetRow = await getRowByDate(
-    accessToken.token!,
-    'Piket GLChat Ceria Automation',
-    new Date(),
-  );
-  console.log(targetRow);
+  if (!creds.token) {
+    console.error('Failed to get credentials from service account');
+
+    return [null, null, null, null, null];
+  }
+
+  const targetRow = await getRowByDate(creds.token, new Date());
+
+  return getPICFromRow(creds.token, targetRow);
 }
 
 /**
