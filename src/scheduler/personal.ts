@@ -19,8 +19,10 @@ export async function sendPICReminder(env: Env) {
   }
 
   const today = new Date();
-  const holiday = await isHoliday(token, today);
-  if (holiday) {
+  const isExcluded = await isHoliday(token, today);
+  if (isExcluded) {
+    console.log('Current day is holiday. Aborting...');
+
     return;
   }
 
@@ -42,9 +44,9 @@ To ensure today's deployment goes smoothly, here are some steps that you can tak
 
 _Good luck during the deployment!_`;
 
+  // exclude daily bug PIC
   const employees = [schedule[1], schedule[2], schedule[4]];
 
-  // exclude daily bug PIC
   await Promise.all(
     employees.map(async (pic) => {
       const userId = await getUserIdByEmail(

@@ -20,28 +20,20 @@ export async function sendDeploymentReminder(env: Env) {
   const today = new Date();
   const isExcluded = await isHoliday(token, today);
   if (isExcluded) {
+    console.log('Current day is holiday. Aborting...');
+
     return;
   }
 
   const schedule = await getSchedule(token, today);
   if (!schedule) {
-    await fetch(
-      `https://chat.googleapis.com/v1/spaces/${env.DAILY_GOOGLE_SPACE}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: `🔔 *GLChat Daily Release Reminder*
+    return sendMessage(
+      token,
+      env.DAILY_GOOGLE_SPACE,
+      `🔔 *GLChat Daily Release Reminder*
 
 ⚠️ _Deploynaut encountered error when fetching schedule data. Please check the execution logs._`,
-        }),
-      },
     );
-
-    return;
   }
 
   const employees = await Promise.all(
@@ -63,13 +55,14 @@ _Please notify us on *this thread* if you need additional time for daily cutoff_
 
 👨‍💼 *Persons in Charge*
 
-PM: ${employees[0].length ? `<${employees[0]}>` : '⚠️'}
-Engineer: ${employees[1].length ? `<${employees[1]}>` : '⚠️'}
-QA: ${employees[2].length ? `<${employees[2]}>` : '⚠️'}
-Infra: ${employees[3].length ? `<${employees[3]}>` : '⚠️'}`;
+PM: ${employees[0].length > 0 ? `<${employees[0]}>` : '⚠️'}
+Engineer: ${employees[1].length > 0 ? `<${employees[1]}>` : '⚠️'}
+QA: ${employees[2].length > 0 ? `<${employees[2]}>` : '⚠️'}
+Infra: ${employees[3].length > 0 ? `<${employees[3]}>` : '⚠️'}`;
 
   const response = await sendMessage(token, env.DAILY_GOOGLE_SPACE, message);
 
-  if (!response.ok) {
+  if (!response) {
+    console.error('Failed to send message');
   }
 }
