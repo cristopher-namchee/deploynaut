@@ -4,12 +4,8 @@ import { HolidayBackgrounds, JWT, SpreadsheetID } from '@/const';
 import type { Employee, GoogleColor, PIC } from '@/types';
 import { formatDate } from './date';
 
-interface GoogleUserAPIResponse {
-  name: string;
-}
-
 /**
- * Get auth token that can be used to interact with Google Chat API
+ * Get auth token that can be used to interact with Google Chat and Sheets API
  * using the provided service account credentials.
  *
  * @param {string} email Service account e-mail
@@ -81,31 +77,24 @@ async function getRowByDate(token: string, date: Date) {
   return matchIndex !== -1 ? matchIndex + 7 : -1;
 }
 
-export async function isHoliday(
-  email: string,
-  key: string,
-  date: Date,
-): Promise<boolean> {
-  const jwt = new auth.JWT({
-    email,
-    key: key.replace(/\\n/gm, '\n'),
-    scopes: JWT.Scopes,
-  });
-  const creds = await jwt.getAccessToken();
-
-  if (!creds.token) {
-    console.error('Failed to get credentials from service account');
-
-    return false;
-  }
-
-  const targetRow = await getRowByDate(creds.token, date);
+/**
+ * Checks whether a date doesn't have a deployment.
+ *
+ * A date doesn't have a deployment if it's marked with reddish background color as stated by PM.
+ *
+ * @param {string} token Google OAuth access token
+ * @param {Date} date Date to check
+ * @returns {Promise<boolean>} A promise that resolves into a boolean. `true` if there's no deployment
+ * in that date. `false` otherwise.
+ */
+export async function isHoliday(token: string, date: Date): Promise<boolean> {
+  const targetRow = await getRowByDate(token, date);
 
   const sampleRange = await sheets('v4').spreadsheets.get(
     {
       spreadsheetId: SpreadsheetID,
       ranges: [`${columnToLetter(10)}${targetRow}`],
-      access_token: creds.token,
+      access_token: token,
       includeGridData: true,
     },
     {},
@@ -119,11 +108,20 @@ export async function isHoliday(
     return false;
   }
 
-  const hex = rgbToHex(backgroundRgb);
+  // apparently, the type is incorrect here. Forced cast it is.
+  const hex = rgbToHex(backgroundRgb as unknown as GoogleColor);
 
   return HolidayBackgrounds.includes(hex.toLowerCase());
 }
 
+/**
+ * Get deployment PIC of a date.
+ *
+ * @param {string} token Google OAuth token
+ * @param {Date} date Date to check
+ * @returns {Promise<PIC | null>} A promise that resolves into array of users.
+ * Or `null` if it fails somehow.
+ */
 export async function getSchedule(
   token: string,
   date: Date,
@@ -136,10 +134,10 @@ export async function getSchedule(
 
   for (let i = 0; i < 5; i++) {
     const dummyColumnLetter = columnToLetter(10 + i);
-    const dummyRange = `${dummyColumnLetter}${row}`;
+    const dummyRange = `${dummyColumnLetter}${targetRow}`;
 
     const targetColumnLetter = columnToLetter(i + 2);
-    const formula = `=${targetColumnLetter}${row}.email`;
+    const formula = `=${targetColumnLetter}${targetRow}.email`;
 
     dataToUpdate.push({
       range: dummyRange,
@@ -231,31 +229,18 @@ export async function getUserIdByEmail(
       return '';
     }
 
-    const url = new URL(
-      `/v1/spaces/${space}/members/${email}`,
-      'https://chat.googleapis.com',
-    );
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+    const response = await chat('v1').spaces.members.get({
+      name: `spaces/${space}/members/${email}`,
+      access_token: token,
     });
 
-    if (!response.ok) {
-      throw new Error(`Response returned ${response.status}`);
-    }
+    const membershipName = response.data.name;
 
-    const data = (await response.json()) as GoogleUserAPIResponse;
-    if (!data.name) {
+    if (!membershipName) {
       return '';
     }
 
-    const [_space, _spaceId, _member, id] = data.name.split('/');
-
-    return `users/${id}`;
+    return `users/${membershipName.split('/').at(-1)}`;
   } catch (err) {
     console.error('Failed to get Google user ID:', err);
 
