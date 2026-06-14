@@ -27,13 +27,15 @@ export async function sendDeploymentReminder(env: Env) {
 
   const schedule = await getSchedule(token, today);
   if (!schedule) {
-    return sendMessage(
+    await sendMessage(
       token,
       env.DAILY_GOOGLE_SPACE,
       `🔔 *GLChat Daily Release Reminder*
 
 ⚠️ _Deploynaut encountered error when fetching schedule data. Please check the execution logs._`,
     );
+
+    return;
   }
 
   const employees = await Promise.all(
