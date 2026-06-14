@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@googleapis/chat':
+        specifier: ^45.0.0
+        version: 45.0.0
       '@googleapis/sheets':
         specifier: ^13.0.2
         version: 13.0.2
@@ -445,6 +448,10 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@googleapis/chat@45.0.0':
+    resolution: {integrity: sha512-vuMNXSRoWBgZDQb5Eg3uGV+1vHPXQ6S80RslGiMu8he2Bj/Yr2K+0zG2c9A2xmARzYuMBvOgDUjRcIJOaaGy8A==}
+    engines: {node: '>=12.0.0'}
 
   '@googleapis/sheets@13.0.2':
     resolution: {integrity: sha512-b1tBlMcfvNEziM4DZCikLOc9iqSlgCK1e5bMKtNQIADRXr1CQmbkHV3ZBVvTsFsjLErgihqO58Itn/kzCnSZ0A==}
@@ -1779,6 +1786,12 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.2':
     optional: true
+
+  '@googleapis/chat@45.0.0':
+    dependencies:
+      googleapis-common: 8.0.2
+    transitivePeerDependencies:
+      - supports-color
 
   '@googleapis/sheets@13.0.2':
     dependencies:
