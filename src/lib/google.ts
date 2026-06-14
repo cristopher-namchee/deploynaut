@@ -81,6 +81,7 @@ async function getRowByDate(token: string, date: Date) {
  * Checks whether a date doesn't have a deployment.
  *
  * A date doesn't have a deployment if it's marked with reddish background color as stated by PM.
+ * If the check fails somehow, it will return `false` to force send.
  *
  * @param {string} token Google OAuth access token
  * @param {Date} date Date to check
@@ -88,30 +89,37 @@ async function getRowByDate(token: string, date: Date) {
  * in that date. `false` otherwise.
  */
 export async function isHoliday(token: string, date: Date): Promise<boolean> {
-  const targetRow = await getRowByDate(token, date);
+  try {
+    const targetRow = await getRowByDate(token, date);
 
-  const sampleRange = await sheets('v4').spreadsheets.get(
-    {
-      spreadsheetId: SpreadsheetID,
-      ranges: [`${columnToLetter(10)}${targetRow}`],
-      access_token: token,
-      includeGridData: true,
-    },
-    {},
-  );
+    const sampleRange = await sheets('v4').spreadsheets.get(
+      {
+        spreadsheetId: SpreadsheetID,
+        ranges: [`${columnToLetter(10)}${targetRow}`],
+        access_token: token,
+        includeGridData: true,
+      },
+      {},
+    );
 
-  const cell =
-    sampleRange.data.sheets?.[0]?.data?.[0]?.rowData?.[0]?.values?.[0];
-  const backgroundRgb = cell?.effectiveFormat?.backgroundColor;
+    const cell =
+      sampleRange.data.sheets?.[0]?.data?.[0]?.rowData?.[0]?.values?.[0];
+    const backgroundRgb = cell?.effectiveFormat?.backgroundColor;
 
-  if (!backgroundRgb) {
+    if (!backgroundRgb) {
+      return false;
+    }
+
+    // apparently, the type is incorrect here. Forced cast it is.
+    const hex = rgbToHex(backgroundRgb as unknown as GoogleColor);
+
+    return HolidayBackgrounds.includes(hex.toLowerCase());
+  } catch (err) {
+    console.error('Failed to check date exclusion status:', err);
+
+    // always send if you can't check.
     return false;
   }
-
-  // apparently, the type is incorrect here. Forced cast it is.
-  const hex = rgbToHex(backgroundRgb as unknown as GoogleColor);
-
-  return HolidayBackgrounds.includes(hex.toLowerCase());
 }
 
 /**
@@ -245,5 +253,83 @@ export async function getUserIdByEmail(
     console.error('Failed to get Google user ID:', err);
 
     return '';
+  }
+}
+
+/**
+ * Sends a message to a Google Space channel.
+ *
+ * @param {string} token Google OAuth access token
+ * @param {string} channel Google Space channel ID to send the message
+ * @param {string} message Actual content of the the message, formatted
+ * using Google rules.
+ * @returns A Promise that resolves to status of the request.
+ */
+export async function sendMessage(
+  token: string,
+  channel: string,
+  message: string,
+): Promise<boolean> {
+  try {
+    const response = await chat('v1').spaces.messages.create({
+      parent: `spaces/${channel}`,
+      access_token: token,
+      requestBody: {
+        text: message,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`response returned ${response.status}`);
+    }
+
+    return response.ok;
+  } catch (err) {
+    console.error(`Failed to send message to channel ${channel}:`, err);
+
+    return false;
+  }
+}
+
+/**
+ * Sends a message to a Google Space channel that can only be seen by a user.
+ *
+ * @param {string} token Google OAuth access token
+ * @param {string} channel Google Space channel ID to send the message
+ * @param {string} message Actual content of the the message, formatted
+ * using Google rules.
+ * @param {string} user User ID as target for the ephermal message.
+ * @returns A Promise that resolves to status of the request.
+ */
+export async function sendEphmermalMessage(
+  token: string,
+  channel: string,
+  message: string,
+  user: string,
+) {
+  try {
+    const response = await chat('v1').spaces.messages.create({
+      parent: `spaces/${channel}`,
+      access_token: token,
+      requestBody: {
+        text: message,
+        privateMessageViewer: {
+          name: user,
+        },
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`response returned ${response.status}`);
+    }
+
+    return response.ok;
+  } catch (err) {
+    console.error(
+      `Failed to send message ephermal to '${user} in channel '${channel}':`,
+      err,
+    );
+
+    return false;
   }
 }

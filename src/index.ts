@@ -1,11 +1,11 @@
-import { sendMessageToChannel } from './scheduler/channel';
-import { sendMessageToPICs } from './scheduler/personal';
+import { sendDeploymentReminder } from './scheduler/channel';
+import { sendPICReminder } from './scheduler/personal';
 
 import type { Env } from './types';
 
 const schedules: Record<string, (env: Env) => Promise<void>> = {
-  '0 5 * * 2-6': sendMessageToPICs,
-  '30 8 * * 2-6': sendMessageToChannel,
+  '0 5 * * 2-6': sendPICReminder,
+  '30 8 * * 2-6': sendDeploymentReminder,
 };
 
 export default {
