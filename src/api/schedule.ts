@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { getGoogleAuthToken, getSchedule } from '@/lib/google';
+import { getGoogleAuthToken, getSchedule, isHoliday } from '@/lib/google';
 import type { Env } from '@/types';
 
 export async function GET(c: Context<{ Bindings: Env }>) {
@@ -21,10 +21,18 @@ export async function GET(c: Context<{ Bindings: Env }>) {
     return c.json({ message: 'Internal server error' }, 500);
   }
 
-  const schedule = await getSchedule(token, new Date(date));
+  const [schedule, holiday] = await Promise.all([
+    getSchedule(token, new Date(date)),
+    isHoliday(token, new Date(date)),
+  ]);
   if (!schedule) {
     return c.json({ message: 'Internal server error' }, 500);
   }
 
-  return c.json({ data: schedule });
+  return c.json({
+    data: {
+      schedule,
+      holiday,
+    },
+  });
 }

@@ -1,7 +1,6 @@
 export interface Env {
   DAILY_GOOGLE_SPACE: string;
 
-  SCRIPT_URL: string;
   GITHUB_TOKEN: string;
 
   SERVICE_ACCOUNT_EMAIL: string;
