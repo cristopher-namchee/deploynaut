@@ -56,6 +56,10 @@ interface BatchGetResponse {
   valueRanges?: ValueRange[];
 }
 
+interface GoogleUserAPIResponse {
+  name: string;
+}
+
 function b64(input: ArrayBuffer | string) {
   const bytes =
     typeof input === 'string'
@@ -164,7 +168,7 @@ function columnToLetter(column: number): string {
   return String.fromCharCode(column + 64);
 }
 
-function rgbToHex(rgb: GoogleColor) {
+function rgbToHex(rgb: GoogleRgbColor) {
   if (!rgb) {
     return '#FFFFFF';
   }
@@ -258,7 +262,7 @@ export async function isHoliday(token: string, date: Date): Promise<boolean> {
     const data: GoogleSpreadsheetResponse = await response.json();
 
     const cell = data.sheets?.[0]?.data?.[0]?.rowData?.[0]?.values?.[0];
-    const backgroundRgb: GoogleColor | undefined =
+    const backgroundRgb: GoogleRgbColor | undefined =
       cell?.effectiveFormat?.backgroundColor;
 
     if (!backgroundRgb) {
@@ -507,7 +511,7 @@ export async function sendEphmermalMessage(
 ) {
   try {
     const response = await fetch(
-      `https://chat.googleapis.com/v1/spaces/${env.DAILY_GOOGLE_SPACE}/messages`,
+      `https://chat.googleapis.com/v1/spaces/${channel}/messages`,
       {
         method: 'POST',
         headers: {
