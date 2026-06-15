@@ -1,9 +1,14 @@
-import { getGoogleAuthToken, getUserIdByEmail } from '@/lib/google';
-import { getSchedule } from '@/lib/sheet';
+import {
+  getGoogleAuthToken,
+  getSchedule,
+  getUserIdByEmail,
+  isHoliday,
+  sendMessage,
+} from '@/lib/google';
 
 import type { Env } from '@/types';
 
-export async function sendMessageToChannel(env: Env) {
+export async function sendDeploymentReminder(env: Env) {
   const token = await getGoogleAuthToken(
     env.SERVICE_ACCOUNT_EMAIL,
     env.SERVICE_ACCOUNT_PRIVATE_KEY,
@@ -13,50 +18,33 @@ export async function sendMessageToChannel(env: Env) {
   }
 
   const today = new Date();
-  const schedule = await getSchedule(env, today);
+  const isExcluded = await isHoliday(token, today);
+  if (isExcluded) {
+    console.log('Current day is holiday. Aborting...');
 
+    return;
+  }
+
+  const schedule = await getSchedule(token, today);
   if (!schedule) {
-    await fetch(
-      `https://chat.googleapis.com/v1/spaces/${env.DAILY_GOOGLE_SPACE}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: `🔔 *GLChat Daily Release Reminder*
+    await sendMessage(
+      token,
+      env.DAILY_GOOGLE_SPACE,
+      `🔔 *GLChat Daily Release Reminder*
 
-⚠️ _Script encountered error when fetching schedule data. Please check the execution logs._`,
-        }),
-      },
+⚠️ _Deploynaut encountered error when fetching schedule data. Please check the execution logs._`,
     );
 
     return;
   }
 
-  const { pics, holiday } = schedule;
-
-  if (holiday) {
-    return;
-  }
-
   const employees = await Promise.all(
-    [pics[1], pics[2], pics[4], pics[3]].map((pic) =>
+    [schedule[1], schedule[2], schedule[4], schedule[3]].map((pic) =>
       getUserIdByEmail(pic.email, env.DAILY_GOOGLE_SPACE, token),
     ),
   );
 
-  await fetch(
-    `https://chat.googleapis.com/v1/spaces/${env.DAILY_GOOGLE_SPACE}/messages`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: `🔔 *GLChat Daily Release Reminder*
+  const message = `🔔 *GLChat Daily Release Reminder*
 
 It's 30 minutes to GLChat Daily Release cutoff time.
 
@@ -69,13 +57,14 @@ _Please notify us on *this thread* if you need additional time for daily cutoff_
 
 👨‍💼 *Persons in Charge*
 
-PM: ${employees[0].length ? `<${employees[0]}>` : '⚠️'}
-Engineer: ${employees[1].length ? `<${employees[1]}>` : '⚠️'}
-QA: ${employees[2].length ? `<${employees[2]}>` : '⚠️'}
-Infra: ${employees[3].length ? `<${employees[3]}>` : '⚠️'}`,
-      }),
-    },
-  );
+PM: ${employees[0].length > 0 ? `<${employees[0]}>` : '⚠️'}
+Engineer: ${employees[1].length > 0 ? `<${employees[1]}>` : '⚠️'}
+QA: ${employees[2].length > 0 ? `<${employees[2]}>` : '⚠️'}
+Infra: ${employees[3].length > 0 ? `<${employees[3]}>` : '⚠️'}`;
 
-  return;
+  const response = await sendMessage(token, env.DAILY_GOOGLE_SPACE, message);
+
+  if (!response) {
+    console.error('Failed to send message');
+  }
 }

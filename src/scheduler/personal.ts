@@ -1,10 +1,15 @@
 import { formatDate } from '@/lib/date';
-import { getGoogleAuthToken, getUserIdByEmail } from '@/lib/google';
-import { getSchedule } from '@/lib/sheet';
+import {
+  getGoogleAuthToken,
+  getSchedule,
+  getUserIdByEmail,
+  isHoliday,
+  sendEphmermalMessage,
+} from '@/lib/google';
 
 import type { Env } from '@/types';
 
-export async function sendMessageToPICs(env: Env) {
+export async function sendPICReminder(env: Env) {
   const token = await getGoogleAuthToken(
     env.SERVICE_ACCOUNT_EMAIL,
     env.SERVICE_ACCOUNT_PRIVATE_KEY,
@@ -14,18 +19,19 @@ export async function sendMessageToPICs(env: Env) {
   }
 
   const today = new Date();
-  const schedule = await getSchedule(env, today);
+  const isExcluded = await isHoliday(token, today);
+  if (isExcluded) {
+    console.log('Current day is holiday. Aborting...');
 
+    return;
+  }
+
+  const schedule = await getSchedule(token, today);
   if (!schedule) {
     return;
   }
 
-  const { pics, holiday } = schedule;
-  if (holiday) {
-    return;
-  }
-
-  const text = `🔔 *GLChat Daily Release PIC Reminder*
+  const message = `🔔 *GLChat Daily Release PIC Reminder*
 
 Hello {user}! This is a friendly reminder that you are the deployment PIC for *${formatDate(today)}*
 
@@ -38,49 +44,31 @@ To ensure today's deployment goes smoothly, here are some steps that you can tak
 
 _Good luck during the deployment!_`;
 
-  if (schedule) {
-    const employees = [pics[1], pics[2], pics[4]];
+  // exclude daily bug PIC
+  const employees = [schedule[1], schedule[2], schedule[4]];
 
-    // exclude daily bug PIC
-    await Promise.all(
-      employees.map(async (pic) => {
-        const userId = await getUserIdByEmail(
-          pic.email,
-          env.DAILY_GOOGLE_SPACE,
-          token,
-        );
+  await Promise.all(
+    employees.map(async (pic) => {
+      const userId = await getUserIdByEmail(
+        pic.email,
+        env.DAILY_GOOGLE_SPACE,
+        token,
+      );
 
-        if (!userId) {
-          return;
-        }
+      if (!userId) {
+        return;
+      }
 
-        const response = await fetch(
-          `https://chat.googleapis.com/v1/spaces/${env.DAILY_GOOGLE_SPACE}/messages`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              text: text.replace('{user}', `<${userId}>`),
-              privateMessageViewer: {
-                name: userId,
-              },
-            }),
-          },
-        );
+      const success = await sendEphmermalMessage(
+        token,
+        env.DAILY_GOOGLE_SPACE,
+        message,
+        userId,
+      );
 
-        if (!response.ok) {
-          const body = await response.json();
-
-          console.error(body);
-
-          throw new Error(
-            `Failed to send 'direct message' to channel for ${pic.email}. Response returned ${response.status}`,
-          );
-        }
-      }),
-    );
-  }
+      if (!success) {
+        console.error(`Failed to send message to '${userId}'.`);
+      }
+    }),
+  );
 }

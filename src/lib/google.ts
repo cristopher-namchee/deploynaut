@@ -1,7 +1,59 @@
-import { JWT } from '@/const';
+import { HolidayBackgrounds, JWT, SpreadsheetID } from '@/const';
+import type { PIC } from '@/types';
+import { formatDate } from './date';
 
 interface GoogleAuthResponse {
   access_token: string;
+}
+
+interface GoogleSheetsValueRange {
+  range: string;
+  majorDimension: 'ROWS' | 'COLUMNS';
+  values?: unknown[][];
+}
+
+interface GoogleRgbColor {
+  red?: number;
+  green?: number;
+  blue?: number;
+  alpha?: number;
+}
+
+interface GoogleCellData {
+  effectiveFormat?: {
+    backgroundColor?: GoogleRgbColor;
+  };
+}
+
+interface GoogleGridData {
+  rowData?: {
+    values?: GoogleCellData[];
+  }[];
+}
+
+interface GoogleSpreadsheetResponse {
+  sheets?: {
+    data?: GoogleGridData[];
+  }[];
+}
+
+interface ValueRange {
+  range: string;
+  values: unknown[][];
+}
+
+interface BatchUpdateRequestBody {
+  valueInputOption: 'USER_ENTERED' | 'RAW';
+  data: ValueRange[];
+}
+
+interface BatchClearRequestBody {
+  ranges: string[];
+}
+
+interface BatchGetResponse {
+  spreadsheetId: string;
+  valueRanges?: ValueRange[];
 }
 
 interface GoogleUserAPIResponse {
@@ -112,6 +164,243 @@ export async function getGoogleAuthToken(
   }
 }
 
+function columnToLetter(column: number): string {
+  return String.fromCharCode(column + 64);
+}
+
+function rgbToHex(rgb: GoogleRgbColor) {
+  if (!rgb) {
+    return '#FFFFFF';
+  }
+
+  const r = Math.round((rgb.red || 0) * 255)
+    .toString(16)
+    .padStart(2, '0');
+  const g = Math.round((rgb.green || 0) * 255)
+    .toString(16)
+    .padStart(2, '0');
+  const b = Math.round((rgb.blue || 0) * 255)
+    .toString(16)
+    .padStart(2, '0');
+
+  return `#${r}${g}${b}`.toUpperCase();
+}
+
+async function getRowByDate(token: string, date: Date) {
+  const range = `A7:A`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/${range}?valueRenderOption=FORMATTED_VALUE`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Sheets API error: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  const data: GoogleSheetsValueRange = await response.json();
+  const rows = data.values;
+
+  if (!rows || rows.length === 0) {
+    return -1;
+  }
+
+  const values = rows.flat();
+  const formattedTargetDate = formatDate(date, { locale: 'en-US' });
+  const matchIndex = values.indexOf(formattedTargetDate);
+
+  return matchIndex !== -1 ? matchIndex + 7 : -1;
+}
+
+/**
+ * Checks whether a date doesn't have a deployment.
+ *
+ * A date doesn't have a deployment if it's marked with reddish background color as stated by PM.
+ * If the check fails somehow, it will return `false` to force send.
+ *
+ * @param {string} token Google OAuth access token
+ * @param {Date} date Date to check
+ * @returns {Promise<boolean>} A promise that resolves into a boolean. `true` if there's no deployment
+ * in that date. `false` otherwise.
+ */
+export async function isHoliday(token: string, date: Date): Promise<boolean> {
+  try {
+    const targetRow = await getRowByDate(token, date);
+    // assume that it's not holiday if failed.
+    if (targetRow === -1) {
+      return false;
+    }
+
+    const cellCoordinate = `${columnToLetter(10)}${targetRow}`;
+
+    const url = new URL(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+    );
+    url.searchParams.append('ranges', cellCoordinate);
+    url.searchParams.append('includeGridData', 'true');
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Google Sheets API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const data: GoogleSpreadsheetResponse = await response.json();
+
+    const cell = data.sheets?.[0]?.data?.[0]?.rowData?.[0]?.values?.[0];
+    const backgroundRgb: GoogleRgbColor | undefined =
+      cell?.effectiveFormat?.backgroundColor;
+
+    if (!backgroundRgb) {
+      return false;
+    }
+
+    const hex = rgbToHex(backgroundRgb);
+
+    return HolidayBackgrounds.includes(hex.toLowerCase());
+  } catch (err) {
+    console.error('Failed to check date exclusion status:', err);
+
+    // always send if you can't check.
+    return false;
+  }
+}
+
+/**
+ * Get deployment PIC of a date.
+ *
+ * @param {string} token Google OAuth token
+ * @param {Date} date Date to check
+ * @returns {Promise<PIC | null>} A promise that resolves into array of users.
+ * Or `null` if it fails somehow.
+ */
+export async function getSchedule(
+  token: string,
+  date: Date,
+): Promise<PIC | null> {
+  try {
+    const targetRow = await getRowByDate(token, date);
+    if (targetRow === -1) {
+      return null;
+    }
+
+    const dataToUpdate: ValueRange[] = [];
+    const rangesToGet: string[] = [];
+    const rangesToClear: string[] = [];
+
+    for (let i = 0; i < 5; i++) {
+      const dummyColumnLetter = columnToLetter(10 + i);
+      const dummyRange = `${dummyColumnLetter}${targetRow}`;
+
+      const targetColumnLetter = columnToLetter(i + 2);
+      const formula = `=${targetColumnLetter}${targetRow}.email`;
+
+      dataToUpdate.push({
+        range: dummyRange,
+        values: [[formula]],
+      });
+
+      rangesToGet.push(dummyRange);
+      rangesToClear.push(dummyRange);
+    }
+
+    rangesToGet.push(`B${targetRow}:F${targetRow}`);
+
+    const baseHeaders = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`;
+
+    const updateBody: BatchUpdateRequestBody = {
+      valueInputOption: 'USER_ENTERED',
+      data: dataToUpdate,
+    };
+    const updateRes = await fetch(`${baseUrl}/values:batchUpdate`, {
+      method: 'POST',
+      headers: baseHeaders,
+      body: JSON.stringify(updateBody),
+    });
+    if (!updateRes.ok) {
+      throw new Error(`batchUpdate failed: ${updateRes.statusText}`);
+    }
+
+    const getUrl = new URL(`${baseUrl}/values:batchGet`);
+    rangesToGet.forEach((range) => {
+      getUrl.searchParams.append('ranges', range);
+    });
+
+    const getRes = await fetch(getUrl.toString(), {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    if (!getRes.ok) {
+      throw new Error(`batchGet failed: ${getRes.statusText}`);
+    }
+
+    const getResult: BatchGetResponse = await getRes.json();
+
+    const clearBody: BatchClearRequestBody = {
+      ranges: rangesToClear,
+    };
+    const clearRes = await fetch(`${baseUrl}/values:batchClear`, {
+      method: 'POST',
+      headers: baseHeaders,
+      body: JSON.stringify(clearBody),
+    });
+    if (!clearRes.ok) {
+      throw new Error(`batchClear failed: ${clearRes.statusText}`);
+    }
+
+    const valueRanges = getResult.valueRanges;
+    if (!valueRanges) {
+      throw new Error(
+        `Failed to get data from B${targetRow}:F${targetRow}, range doesn't exist.`,
+      );
+    }
+
+    const users = [];
+
+    for (let idx = 0; idx < 5; idx++) {
+      const currentRange = valueRanges[idx];
+      const lastRange = valueRanges[valueRanges.length - 1];
+
+      if (!currentRange?.values || !lastRange?.values) {
+        throw new Error('Something went wrong with the ranges');
+      }
+
+      const email = currentRange.values[0][0] as string;
+      const name = lastRange.values[0][idx] as string;
+
+      users.push({
+        email: email === '#REF!' ? '' : email,
+        name,
+      });
+    }
+
+    return users as PIC;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
 /**
  * Get Google Space user ID by email.
  *
@@ -160,5 +449,95 @@ export async function getUserIdByEmail(
     console.error('Failed to get Google user ID:', err);
 
     return '';
+  }
+}
+
+/**
+ * Sends a message to a Google Space channel.
+ *
+ * @param {string} token Google OAuth access token
+ * @param {string} channel Google Space channel ID to send the message
+ * @param {string} message Actual content of the the message, formatted
+ * using Google rules.
+ * @returns A Promise that resolves to status of the request.
+ */
+export async function sendMessage(
+  token: string,
+  channel: string,
+  message: string,
+): Promise<boolean> {
+  try {
+    const response = await fetch(
+      `https://chat.googleapis.com/v1/spaces/${channel}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: message,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`response returned ${response.status}`);
+    }
+
+    return response.ok;
+  } catch (err) {
+    console.error(`Failed to send message to channel ${channel}:`, err);
+
+    return false;
+  }
+}
+
+/**
+ * Sends a message to a Google Space channel that can only be seen by a user.
+ *
+ * @param {string} token Google OAuth access token
+ * @param {string} channel Google Space channel ID to send the message
+ * @param {string} message Actual content of the the message, formatted
+ * using Google rules.
+ * @param {string} user User ID as target for the ephermal message.
+ * @returns A Promise that resolves to status of the request.
+ */
+export async function sendEphmermalMessage(
+  token: string,
+  channel: string,
+  message: string,
+  user: string,
+) {
+  try {
+    const response = await fetch(
+      `https://chat.googleapis.com/v1/spaces/${channel}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: message,
+          privateMessageViewer: {
+            name: user,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`response returned ${response.status}`);
+    }
+
+    return response.ok;
+  } catch (err) {
+    console.error(
+      `Failed to send message ephermal to '${user} in channel '${channel}':`,
+      err,
+    );
+
+    return false;
   }
 }
