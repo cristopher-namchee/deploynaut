@@ -18,10 +18,3 @@ export interface Employee {
 }
 
 export type PIC = [Employee, Employee, Employee, Employee, Employee];
-
-export interface GoogleColor {
-  red: number;
-  green: number;
-  blue: number;
-  alpha: number;
-}
