@@ -10,7 +10,8 @@ import {
   it,
   vi,
 } from 'vitest';
-import { getGoogleAuthToken, getUserIdByEmail } from '@/lib/google';
+import { SpreadsheetID } from '@/const';
+import { getGoogleAuthToken, getUserIdByEmail, isHoliday } from '@/lib/google';
 
 const mockServer = setupServer();
 
@@ -131,7 +132,189 @@ describe('getGoogleAuthToken', () => {
   });
 });
 
-describe('getGoogleUserID', () => {
+describe('isHoliday', () => {
+  beforeAll(async () => {
+    mockServer.listen();
+  });
+
+  afterEach(() => {
+    mockServer.resetHandlers();
+    vi.resetAllMocks();
+  });
+
+  afterAll(() => {
+    mockServer.close();
+  });
+
+  it('should return false when the date is not found in the sheet (getRowByDate returns -1)', async () => {
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/A7:A`,
+        () => {
+          return HttpResponse.json({ values: [] });
+        },
+      ),
+    );
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await isHoliday('token', new Date('2026-06-15'));
+
+    expect(result).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('should return false if the cell formatting API call returns a non-200 status code', async () => {
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/A7:A`,
+        () => {
+          return HttpResponse.json({ values: [['Monday, June 15, 2026']] });
+        },
+      ),
+    );
+
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+        () => {
+          return new HttpResponse(null, {
+            status: 500,
+            statusText: 'Internal Server Error',
+          });
+        },
+      ),
+    );
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await isHoliday('token', new Date('2026-06-15'));
+
+    expect(result).toBe(false);
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it('should return false when there is no background color applied to the targeted cell', async () => {
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/A7:A`,
+        () => {
+          return HttpResponse.json({ values: [['Monday, June 15, 2026']] });
+        },
+      ),
+    );
+
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+        () => {
+          return HttpResponse.json({
+            sheets: [
+              { data: [{ rowData: [{ values: [{ effectiveFormat: {} }] }] }] },
+            ],
+          });
+        },
+      ),
+    );
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await isHoliday('token', new Date('2026-06-15'));
+
+    expect(result).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('should return false when the background color converts to a non-holiday hex', async () => {
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/A7:A`,
+        () => {
+          return HttpResponse.json({ values: [['Monday, June 15, 2026']] });
+        },
+      ),
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+        () => {
+          return HttpResponse.json({
+            sheets: [
+              {
+                data: [
+                  {
+                    rowData: [
+                      {
+                        values: [
+                          {
+                            effectiveFormat: {
+                              backgroundColor: { red: 1, green: 1, blue: 1 },
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+        },
+      ),
+    );
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await isHoliday('token', new Date('2026-06-15'));
+
+    expect(result).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('should return true when background color matches HolidayBackgrounds registry', async () => {
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/A7:A`,
+        () => {
+          return HttpResponse.json({ values: [['Monday, June 15, 2026']] });
+        },
+      ),
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+        () => {
+          return HttpResponse.json({
+            sheets: [
+              {
+                data: [
+                  {
+                    rowData: [
+                      {
+                        values: [
+                          {
+                            effectiveFormat: {
+                              backgroundColor: { red: 1, green: 0, blue: 0 },
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+        },
+      ),
+    );
+
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await isHoliday('token', new Date('2026-06-15'));
+
+    expect(result).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('getUserIdByEmail', () => {
   beforeAll(async () => {
     mockServer.listen();
   });
