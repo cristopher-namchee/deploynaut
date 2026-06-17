@@ -19,7 +19,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -43,7 +42,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -71,7 +69,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -113,7 +110,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -156,7 +152,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     const sentMessage = sendSpy.mock.calls[0][2];

@@ -62,7 +62,7 @@ _Good luck during the deployment!_`;
       const success = await sendEphmermalMessage(
         token,
         env.DAILY_GOOGLE_SPACE,
-        message,
+        message.replace('{user}', `<${userId}>`),
         userId,
       );
 
