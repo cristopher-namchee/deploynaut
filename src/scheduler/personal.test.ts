@@ -19,7 +19,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -43,7 +42,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -70,7 +68,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -118,7 +115,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space-123',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -189,7 +185,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space-123',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(sendMsgSpy).toHaveBeenCalledTimes(2);
@@ -219,7 +214,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space-123',
       GITHUB_TOKEN: '',
-      SCRIPT_URL: '',
     });
 
     expect(consoleErrorSpy).toHaveBeenCalled();
