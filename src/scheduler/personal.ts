@@ -45,7 +45,7 @@ To ensure today's deployment goes smoothly, here are some steps that you can tak
 _Good luck during the deployment!_`;
 
   // exclude daily bug PIC
-  const employees = [schedule[1], schedule[2], schedule[4]];
+  const employees = [schedule[1], schedule[2], schedule[4]].flat();
 
   await Promise.all(
     employees.map(async (pic) => {
@@ -59,16 +59,12 @@ _Good luck during the deployment!_`;
         return;
       }
 
-      const success = await sendEphmermalMessage(
+      await sendEphmermalMessage(
         token,
         env.DAILY_GOOGLE_SPACE,
         message.replace('{user}', `<${userId}>`),
         userId,
       );
-
-      if (!success) {
-        console.error(`Failed to send message to '${userId}'.`);
-      }
     }),
   );
 }

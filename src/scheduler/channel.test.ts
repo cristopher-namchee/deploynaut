@@ -18,7 +18,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -41,7 +40,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -68,7 +66,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -88,11 +85,11 @@ describe('sendDeploymentReminder', () => {
     vi.spyOn(lib, 'isHoliday').mockResolvedValueOnce(false);
 
     const mockSchedule: PIC = [
-      { name: 'Bug Reporter', email: 'bugger@gdplabs.id' },
-      { name: 'PM', email: 'pm@company.com' },
-      { name: 'Engineer', email: 'eng@company.com' },
-      { name: 'Infra', email: 'infra@company.com' },
-      { name: 'QA', email: 'qa@company.com' },
+      [{ name: 'Bug Reporter', email: 'bugger@gdplabs.id' }],
+      [{ name: 'PM', email: 'pm@company.com' }],
+      [{ name: 'Engineer', email: 'eng@company.com' }],
+      [{ name: 'Infra', email: 'infra@company.com' }],
+      [{ name: 'QA', email: 'qa@company.com' }],
     ];
     vi.spyOn(lib, 'getSchedule').mockResolvedValueOnce(mockSchedule);
 
@@ -109,7 +106,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -123,16 +119,60 @@ describe('sendDeploymentReminder', () => {
     expect(sentMessage).toContain('Infra: ⚠️');
   });
 
+  it('should list every mention when a role has multiple PICs', async () => {
+    vi.spyOn(lib, 'getGoogleAuthToken').mockResolvedValueOnce('token');
+    vi.spyOn(lib, 'isHoliday').mockResolvedValueOnce(false);
+
+    const mockSchedule: PIC = [
+      [{ name: 'Bug Reporter', email: 'bugger@gdplabs.id' }],
+      [
+        { name: 'PM A', email: 'pm.a@company.com' },
+        { name: 'PM B', email: 'pm.b@company.com' },
+      ],
+      [{ name: 'Engineer', email: 'eng@company.com' }],
+      [],
+      [{ name: 'QA', email: 'qa@company.com' }],
+    ];
+    vi.spyOn(lib, 'getSchedule').mockResolvedValueOnce(mockSchedule);
+
+    const userResolverSpy = vi
+      .spyOn(lib, 'getUserIdByEmail')
+      .mockImplementation(async (email) => {
+        if (email === 'pm.a@company.com') return 'users/pm_a';
+        if (email === 'pm.b@company.com') return 'users/pm_b';
+        if (email === 'eng@company.com') return 'users/eng';
+        if (email === 'qa@company.com') return 'users/qa';
+        return '';
+      });
+
+    const sendSpy = vi.spyOn(lib, 'sendMessage').mockResolvedValueOnce(true);
+
+    await sendDeploymentReminder({
+      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      DAILY_GOOGLE_SPACE: 'space',
+    });
+
+    // the empty Infra slot resolves nobody
+    expect(userResolverSpy).toHaveBeenCalledTimes(4);
+
+    const sentMessage = sendSpy.mock.calls[0][2];
+    expect(sentMessage).toContain('PM: <users/pm_a> <users/pm_b>');
+    expect(sentMessage).toContain('Engineer: <users/eng>');
+    expect(sentMessage).toContain('QA: <users/qa>');
+    expect(sentMessage).toContain('Infra: ⚠️');
+  });
+
   it('should fully resolve all users, send the complete payload, and handle send failures gracefully', async () => {
     vi.spyOn(lib, 'getGoogleAuthToken').mockResolvedValueOnce('token');
     vi.spyOn(lib, 'isHoliday').mockResolvedValueOnce(false);
 
     const mockSchedule: PIC = [
-      { name: 'Bug Reporter', email: 'bugger@gdplabs.id' },
-      { name: 'PM', email: 'pm@company.com' },
-      { name: 'Engineer', email: 'eng@company.com' },
-      { name: 'Infra', email: 'infra@company.com' },
-      { name: 'QA', email: 'qa@company.com' },
+      [{ name: 'Bug Reporter', email: 'bugger@gdplabs.id' }],
+      [{ name: 'PM', email: 'pm@company.com' }],
+      [{ name: 'Engineer', email: 'eng@company.com' }],
+      [{ name: 'Infra', email: 'infra@company.com' }],
+      [{ name: 'QA', email: 'qa@company.com' }],
     ];
     vi.spyOn(lib, 'getSchedule').mockResolvedValueOnce(mockSchedule);
 
@@ -151,7 +191,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     const sentMessage = sendSpy.mock.calls[0][2];

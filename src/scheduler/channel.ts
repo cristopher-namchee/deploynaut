@@ -40,9 +40,21 @@ export async function sendDeploymentReminder(env: Env) {
 
   const employees = await Promise.all(
     [schedule[1], schedule[2], schedule[4], schedule[3]].map((pic) =>
-      getUserIdByEmail(pic.email, env.DAILY_GOOGLE_SPACE, token),
+      Promise.all(
+        pic.map((p) =>
+          getUserIdByEmail(p.email, env.DAILY_GOOGLE_SPACE, token),
+        ),
+      ),
     ),
   );
+
+  const mentions = employees.map((userIds) => {
+    const resolved = userIds.filter(Boolean);
+
+    return resolved.length > 0
+      ? resolved.map((id) => `<${id}>`).join(' ')
+      : '⚠️';
+  });
 
   const message = `🔔 *GLChat Daily Release Reminder*
 
@@ -57,10 +69,10 @@ _Please notify us on *this thread* if you need additional time for daily cutoff_
 
 👨‍💼 *Persons in Charge*
 
-PM: ${employees[0].length > 0 ? `<${employees[0]}>` : '⚠️'}
-Engineer: ${employees[1].length > 0 ? `<${employees[1]}>` : '⚠️'}
-QA: ${employees[2].length > 0 ? `<${employees[2]}>` : '⚠️'}
-Infra: ${employees[3].length > 0 ? `<${employees[3]}>` : '⚠️'}`;
+PM: ${mentions[0]}
+Engineer: ${mentions[1]}
+QA: ${mentions[2]}
+Infra: ${mentions[3]}`;
 
   const response = await sendMessage(token, env.DAILY_GOOGLE_SPACE, message);
 

@@ -1,8 +1,6 @@
 export interface Env {
   DAILY_GOOGLE_SPACE: string;
 
-  GITHUB_TOKEN: string;
-
   SERVICE_ACCOUNT_EMAIL: string;
   SERVICE_ACCOUNT_PRIVATE_KEY: string;
 }
@@ -16,4 +14,4 @@ export interface Employee {
   email: string;
 }
 
-export type PIC = [Employee, Employee, Employee, Employee, Employee];
+export type PIC = [Employee[], Employee[], Employee[], Employee[], Employee[]];
