@@ -18,7 +18,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -41,7 +40,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -67,7 +65,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -87,11 +84,11 @@ describe('sendDeploymentReminder', () => {
     vi.spyOn(lib, 'isHoliday').mockResolvedValueOnce(false);
 
     const mockSchedule: PIC = [
-      { email: 'index0@test.com', name: 'Zero' },
-      { email: 'index1@test.com', name: 'One' },
-      { email: 'index2@test.com', name: 'Two' },
-      { email: 'index3@test.com', name: 'Three' },
-      { email: 'index4@test.com', name: 'Four' },
+      [{ email: 'index0@test.com', name: 'Zero' }],
+      [{ email: 'index1@test.com', name: 'One' }],
+      [{ email: 'index2@test.com', name: 'Two' }],
+      [{ email: 'index3@test.com', name: 'Three' }],
+      [{ email: 'index4@test.com', name: 'Four' }],
     ];
     const scheduleSpy = vi
       .spyOn(lib, 'getSchedule')
@@ -114,7 +111,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space-123',
-      GITHUB_TOKEN: '',
     });
 
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -158,16 +154,83 @@ describe('sendDeploymentReminder', () => {
     );
   });
 
+  it('should send messages to every employee in a multi-PIC slot', async () => {
+    vi.spyOn(lib, 'getGoogleAuthToken').mockResolvedValueOnce('mock-token');
+    vi.spyOn(lib, 'isHoliday').mockResolvedValueOnce(false);
+
+    const mockSchedule: PIC = [
+      [{ email: 'index0@test.com', name: 'Zero' }],
+      [
+        { email: 'index1a@test.com', name: 'One A' },
+        { email: 'index1b@test.com', name: 'One B' },
+      ],
+      [],
+      [{ email: 'index3@test.com', name: 'Three' }],
+      [{ email: 'index4@test.com', name: 'Four' }],
+    ];
+    vi.spyOn(lib, 'getSchedule').mockResolvedValueOnce(mockSchedule);
+
+    const userResolverSpy = vi
+      .spyOn(lib, 'getUserIdByEmail')
+      .mockImplementation(async (email) => {
+        if (email === 'index1a@test.com') return 'user-1a';
+        if (email === 'index1b@test.com') return 'user-1b';
+        if (email === 'index4@test.com') return 'user-4';
+        return '';
+      });
+
+    const sendMsgSpy = vi
+      .spyOn(lib, 'sendEphmermalMessage')
+      .mockResolvedValue(true);
+
+    await sendPICReminder({
+      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      DAILY_GOOGLE_SPACE: 'space-123',
+    });
+
+    expect(userResolverSpy).toHaveBeenCalledTimes(3);
+    expect(userResolverSpy).toHaveBeenCalledWith(
+      'index1a@test.com',
+      'space-123',
+      'mock-token',
+    );
+    expect(userResolverSpy).toHaveBeenCalledWith(
+      'index1b@test.com',
+      'space-123',
+      'mock-token',
+    );
+    expect(userResolverSpy).not.toHaveBeenCalledWith(
+      'index3@test.com',
+      'space-123',
+      'mock-token',
+    );
+
+    expect(sendMsgSpy).toHaveBeenCalledTimes(3);
+    expect(sendMsgSpy).toHaveBeenCalledWith(
+      'mock-token',
+      'space-123',
+      expect.any(String),
+      'user-1a',
+    );
+    expect(sendMsgSpy).toHaveBeenCalledWith(
+      'mock-token',
+      'space-123',
+      expect.any(String),
+      'user-1b',
+    );
+  });
+
   it('should skip sending message if userId cannot be resolved', async () => {
     vi.spyOn(lib, 'getGoogleAuthToken').mockResolvedValueOnce('mock-token');
     vi.spyOn(lib, 'isHoliday').mockResolvedValueOnce(false);
 
     const mockSchedule: PIC = [
-      { email: 'index0@test.com', name: 'Zero' },
-      { email: 'index1@test.com', name: 'One' },
-      { email: 'index2@test.com', name: 'Two' },
-      { email: 'index3@test.com', name: 'Three' },
-      { email: 'index4@test.com', name: 'Four' },
+      [{ email: 'index0@test.com', name: 'Zero' }],
+      [{ email: 'index1@test.com', name: 'One' }],
+      [{ email: 'index2@test.com', name: 'Two' }],
+      [{ email: 'index3@test.com', name: 'Three' }],
+      [{ email: 'index4@test.com', name: 'Four' }],
     ];
     vi.spyOn(lib, 'getSchedule').mockResolvedValueOnce(mockSchedule);
 
@@ -184,7 +247,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space-123',
-      GITHUB_TOKEN: '',
     });
 
     expect(sendMsgSpy).toHaveBeenCalledTimes(2);
@@ -195,11 +257,11 @@ describe('sendDeploymentReminder', () => {
     vi.spyOn(lib, 'isHoliday').mockResolvedValueOnce(false);
 
     const mockSchedule: PIC = [
-      { email: 'index0@test.com', name: 'Zero' },
-      { email: 'index1@test.com', name: 'One' },
-      { email: 'index2@test.com', name: 'Two' },
-      { email: 'index3@test.com', name: 'Three' },
-      { email: 'index4@test.com', name: 'Four' },
+      [{ email: 'index0@test.com', name: 'Zero' }],
+      [{ email: 'index1@test.com', name: 'One' }],
+      [{ email: 'index2@test.com', name: 'Two' }],
+      [{ email: 'index3@test.com', name: 'Three' }],
+      [{ email: 'index4@test.com', name: 'Four' }],
     ];
     vi.spyOn(lib, 'getSchedule').mockResolvedValueOnce(mockSchedule);
     vi.spyOn(lib, 'getUserIdByEmail').mockResolvedValue('user-id');
@@ -213,7 +275,6 @@ describe('sendDeploymentReminder', () => {
       SERVICE_ACCOUNT_EMAIL: 'EMAIL',
       SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       DAILY_GOOGLE_SPACE: 'space-123',
-      GITHUB_TOKEN: '',
     });
 
     expect(consoleErrorSpy).toHaveBeenCalled();

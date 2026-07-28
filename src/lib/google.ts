@@ -1,5 +1,5 @@
 import { HolidayBackgrounds, JWT, SpreadsheetID } from '@/const';
-import type { PIC } from '@/types';
+import type { Employee, PIC } from '@/types';
 import { formatDate } from './date';
 
 interface GoogleAuthResponse {
@@ -37,23 +37,37 @@ interface GoogleSpreadsheetResponse {
   }[];
 }
 
-interface ValueRange {
-  range: string;
-  values: unknown[][];
+interface PersonProperties {
+  email: string;
+  displayFormat?: string;
 }
 
-interface BatchUpdateRequestBody {
-  valueInputOption: 'USER_ENTERED' | 'RAW';
-  data: ValueRange[];
+interface ChipRun {
+  startIndex?: number;
+  chip?: {
+    personProperties?: PersonProperties;
+  };
 }
 
-interface BatchClearRequestBody {
-  ranges: string[];
+interface CellValue {
+  formattedValue?: string; // Note: singular formattedValue
+  chipRuns?: ChipRun[];
 }
 
-interface BatchGetResponse {
-  spreadsheetId: string;
-  valueRanges?: ValueRange[];
+interface RowData {
+  values?: CellValue[];
+}
+
+interface GridData {
+  rowData?: RowData[];
+}
+
+interface Sheet {
+  data?: GridData[];
+}
+
+export interface ChipRunResponse {
+  sheets?: Sheet[];
 }
 
 interface GoogleUserAPIResponse {
@@ -298,103 +312,66 @@ export async function getSchedule(
       return null;
     }
 
-    const dataToUpdate: ValueRange[] = [];
-    const rangesToGet: string[] = [];
-    const rangesToClear: string[] = [];
+    const url = new URL(
+      `/v4/spreadsheets/${SpreadsheetID}`,
+      'https://sheets.googleapis.com',
+    );
+    const searchParams = new URLSearchParams();
+    searchParams.append(
+      'fields',
+      'sheets.data.rowData.values(formattedValue,chipRuns)',
+    );
+    searchParams.append('ranges', `B${targetRow}:F${targetRow}`);
 
-    for (let i = 0; i < 5; i++) {
-      const dummyColumnLetter = columnToLetter(10 + i);
-      const dummyRange = `${dummyColumnLetter}${targetRow}`;
+    url.search = searchParams.toString();
 
-      const targetColumnLetter = columnToLetter(i + 2);
-      const formula = `=${targetColumnLetter}${targetRow}.email`;
-
-      dataToUpdate.push({
-        range: dummyRange,
-        values: [[formula]],
-      });
-
-      rangesToGet.push(dummyRange);
-      rangesToClear.push(dummyRange);
-    }
-
-    rangesToGet.push(`B${targetRow}:F${targetRow}`);
-
-    const baseHeaders = {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    };
-
-    const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`;
-
-    const updateBody: BatchUpdateRequestBody = {
-      valueInputOption: 'USER_ENTERED',
-      data: dataToUpdate,
-    };
-    const updateRes = await fetch(`${baseUrl}/values:batchUpdate`, {
-      method: 'POST',
-      headers: baseHeaders,
-      body: JSON.stringify(updateBody),
-    });
-    if (!updateRes.ok) {
-      throw new Error(`batchUpdate failed: ${updateRes.statusText}`);
-    }
-
-    const getUrl = new URL(`${baseUrl}/values:batchGet`);
-    rangesToGet.forEach((range) => {
-      getUrl.searchParams.append('ranges', range);
-    });
-
-    const getRes = await fetch(getUrl.toString(), {
+    const response = await fetch(url, {
       method: 'GET',
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
     });
-    if (!getRes.ok) {
-      throw new Error(`batchGet failed: ${getRes.statusText}`);
-    }
 
-    const getResult: BatchGetResponse = await getRes.json();
+    const body = (await response.json()) as ChipRunResponse;
 
-    const clearBody: BatchClearRequestBody = {
-      ranges: rangesToClear,
-    };
-    const clearRes = await fetch(`${baseUrl}/values:batchClear`, {
-      method: 'POST',
-      headers: baseHeaders,
-      body: JSON.stringify(clearBody),
-    });
-    if (!clearRes.ok) {
-      throw new Error(`batchClear failed: ${clearRes.statusText}`);
-    }
+    const rows = body.sheets?.[0].data?.[0].rowData;
+    const pics: Employee[][] = [];
 
-    const valueRanges = getResult.valueRanges;
-    if (!valueRanges) {
-      throw new Error(
-        `Failed to get data from B${targetRow}:F${targetRow}, range doesn't exist.`,
-      );
-    }
+    if (rows) {
+      rows.forEach((cell) => {
+        const cells = cell.values;
 
-    const users = [];
+        cells?.forEach((cell) => {
+          const actualValue = cell.formattedValue;
+          const arr: { name: string; email: string }[] = [];
 
-    for (let idx = 0; idx < 5; idx++) {
-      const currentRange = valueRanges[idx];
-      const lastRange = valueRanges[valueRanges.length - 1];
+          let lastIdx = 0;
+          let mail: string;
 
-      if (!currentRange?.values || !lastRange?.values) {
-        throw new Error('Something went wrong with the ranges');
-      }
+          cell.chipRuns?.forEach((cr) => {
+            if (cr.chip) {
+              mail = cr.chip?.personProperties?.email as string;
+            } else if (cr.startIndex) {
+              const name = actualValue?.slice(lastIdx, cr.startIndex) as string;
+              lastIdx = cr.startIndex;
 
-      const email = currentRange.values[0][0] as string;
-      const name = lastRange.values[0][idx] as string;
+              arr.push({ name, email: mail });
+              mail = '';
+            }
+          });
 
-      users.push({
-        email: email === '#REF!' ? '' : email,
-        name,
+          pics.push(arr);
+        });
       });
     }
 
-    return users as PIC;
+    while (pics.length < 5) {
+      pics.push([]);
+    }
+
+    return pics as PIC;
   } catch (err) {
     console.error(err);
     return null;
