@@ -1,3 +1,4 @@
+import { Schedules } from '@/const';
 import {
   getGoogleAuthToken,
   getSchedule,
@@ -8,7 +9,7 @@ import {
 
 import type { Env } from '@/types';
 
-export async function sendDeploymentReminder(env: Env) {
+export async function sendDeploymentReminder(env: Env, project: keyof typeof Schedules) {
   const token = await getGoogleAuthToken(
     env.SERVICE_ACCOUNT_EMAIL,
     env.SERVICE_ACCOUNT_PRIVATE_KEY,
@@ -25,12 +26,14 @@ export async function sendDeploymentReminder(env: Env) {
     return;
   }
 
-  const schedule = await getSchedule(token, today);
-  if (!schedule) {
+  const metadata = Schedules[project];
+  const schedule = await getSchedule(token, metadata.id, today);
+
+  if (!schedule || !metadata) {
     await sendMessage(
       token,
       env.DAILY_GOOGLE_SPACE,
-      `🔔 *GLChat Daily Release Reminder*
+      `🔔 *${metadata.label} Daily Release Reminder*
 
 ⚠️ _Deploynaut encountered error when fetching schedule data. Please check the execution logs._`,
     );
@@ -56,14 +59,14 @@ export async function sendDeploymentReminder(env: Env) {
       : '⚠️';
   });
 
-  const message = `🔔 *GLChat Daily Release Reminder*
+  const message = `🔔 *${metadata.label} Daily Release Reminder*
 
-It's 30 minutes to GLChat Daily Release cutoff time.
+It's 30 minutes to ${metadata.label} Daily Release cutoff time.
 
 ✅ *Things to prepare before release:*
 
 - Ensure that all latest changes have been <https://github.com/GDP-ADMIN/glchat/commits/main/|successfully deployed> on staging.
-- Re-confirm all changes to the release to all GLChat development team
+- Re-confirm all changes to the release to all ${metadata.label} development team
 
 _Please notify us on *this thread* if you need additional time for daily cutoff_
 

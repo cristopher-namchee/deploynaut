@@ -298,12 +298,14 @@ export async function isHoliday(token: string, date: Date): Promise<boolean> {
  * Get deployment PIC of a date.
  *
  * @param {string} token Google OAuth token
+ * @param {string} spreadsheetId Spreadsheet ID that is used as schedule source
  * @param {Date} date Date to check
  * @returns {Promise<PIC | null>} A promise that resolves into array of users.
  * Or `null` if it fails somehow.
  */
 export async function getSchedule(
   token: string,
+  spreadsheetId: string,
   date: Date,
 ): Promise<PIC | null> {
   try {
@@ -313,7 +315,7 @@ export async function getSchedule(
     }
 
     const url = new URL(
-      `/v4/spreadsheets/${SpreadsheetID}`,
+      `/v4/spreadsheets/${spreadsheetId}`,
       'https://sheets.googleapis.com',
     );
     const searchParams = new URLSearchParams();

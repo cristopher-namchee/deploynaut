@@ -1,3 +1,4 @@
+import { Schedules } from '@/const';
 import { formatDate } from '@/lib/date';
 import {
   getGoogleAuthToken,
@@ -9,7 +10,7 @@ import {
 
 import type { Env } from '@/types';
 
-export async function sendPICReminder(env: Env) {
+export async function sendPICReminder(env: Env, project: keyof typeof Schedules) {
   const token = await getGoogleAuthToken(
     env.SERVICE_ACCOUNT_EMAIL,
     env.SERVICE_ACCOUNT_PRIVATE_KEY,
@@ -25,6 +26,8 @@ export async function sendPICReminder(env: Env) {
 
     return;
   }
+
+  const metadata = Sche
 
   const schedule = await getSchedule(token, today);
   if (!schedule) {
