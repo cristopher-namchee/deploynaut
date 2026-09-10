@@ -25,8 +25,8 @@ export const Schedules = {
   aip: {
     sheet_id: '1niwmbC9_DEV7-objT316vST-NQxgaulh3Vs8fnug7wQ',
     label: 'GL AIP',
-    space: '',
-    commits: '',
+    space: 'AAAAvnC4Qyg',
+    commits: 'https://github.com/GDP-ADMIN/ai-agent-platform/commits/main-dev/',
     exec: {
       reminder: '05:00',
       deployment: '08:00',
