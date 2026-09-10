@@ -6,9 +6,9 @@ import {
   sendMessage,
 } from '@/lib/google';
 
-import type { Env } from '@/types';
+import type { Env, Schedule } from '@/types';
 
-export async function sendDeploymentReminder(env: Env) {
+export async function sendDeploymentReminder(env: Env, project: Schedule) {
   const token = await getGoogleAuthToken(
     env.SERVICE_ACCOUNT_EMAIL,
     env.SERVICE_ACCOUNT_PRIVATE_KEY,
@@ -18,19 +18,20 @@ export async function sendDeploymentReminder(env: Env) {
   }
 
   const today = new Date();
-  const isExcluded = await isHoliday(token, today);
+  const isExcluded = await isHoliday(token, project.sheet_id, today);
   if (isExcluded) {
     console.log('Current day is holiday. Aborting...');
 
     return;
   }
 
-  const schedule = await getSchedule(token, today);
+  const schedule = await getSchedule(token, project.sheet_id, today);
+
   if (!schedule) {
     await sendMessage(
       token,
-      env.DAILY_GOOGLE_SPACE,
-      `🔔 *GLChat Daily Release Reminder*
+      project.space,
+      `🔔 *${project.app_name} Daily Release Reminder*
 
 ⚠️ _Deploynaut encountered error when fetching schedule data. Please check the execution logs._`,
     );
@@ -41,9 +42,7 @@ export async function sendDeploymentReminder(env: Env) {
   const employees = await Promise.all(
     [schedule[1], schedule[2], schedule[4], schedule[3]].map((pic) =>
       Promise.all(
-        pic.map((p) =>
-          getUserIdByEmail(p.email, env.DAILY_GOOGLE_SPACE, token),
-        ),
+        pic.map((p) => getUserIdByEmail(p.email, project.space, token)),
       ),
     ),
   );
@@ -56,14 +55,14 @@ export async function sendDeploymentReminder(env: Env) {
       : '⚠️';
   });
 
-  const message = `🔔 *GLChat Daily Release Reminder*
+  const message = `🔔 *${project.app_name} Daily Release Reminder*
 
-It's 30 minutes to GLChat Daily Release cutoff time.
+It's 30 minutes to ${project.app_name} Daily Release cutoff time.
 
 ✅ *Things to prepare before release:*
 
 - Ensure that all latest changes have been <https://github.com/GDP-ADMIN/glchat/commits/main/|successfully deployed> on staging.
-- Re-confirm all changes to the release to all GLChat development team
+- Re-confirm all changes to the release to all ${project.app_name} development team
 
 _Please notify us on *this thread* if you need additional time for daily cutoff_
 
@@ -74,7 +73,7 @@ Engineer: ${mentions[1]}
 QA: ${mentions[2]}
 Infra: ${mentions[3]}`;
 
-  const response = await sendMessage(token, env.DAILY_GOOGLE_SPACE, message);
+  const response = await sendMessage(token, project.space, message);
 
   if (!response) {
     console.error('Failed to send message');

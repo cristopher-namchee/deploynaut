@@ -10,10 +10,10 @@ import {
   it,
   vi,
 } from 'vitest';
-import { SpreadsheetID } from '@/const';
 import { getGoogleAuthToken, getUserIdByEmail, isHoliday } from '@/lib/google';
 
 const mockServer = setupServer();
+const SpreadsheetID = 'sample_sheet';
 
 function arrayBufferToPem(buffer: ArrayBuffer) {
   const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -158,7 +158,11 @@ describe('isHoliday', () => {
 
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const result = await isHoliday('token', new Date('2026-06-15'));
+    const result = await isHoliday(
+      'token',
+      SpreadsheetID,
+      new Date('2026-06-15'),
+    );
 
     expect(result).toBe(false);
     expect(spy).not.toHaveBeenCalled();
@@ -188,7 +192,11 @@ describe('isHoliday', () => {
 
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const result = await isHoliday('token', new Date('2026-06-15'));
+    const result = await isHoliday(
+      'token',
+      SpreadsheetID,
+      new Date('2026-06-15'),
+    );
 
     expect(result).toBe(false);
     expect(spy).toHaveBeenCalledOnce();
@@ -219,7 +227,11 @@ describe('isHoliday', () => {
 
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const result = await isHoliday('token', new Date('2026-06-15'));
+    const result = await isHoliday(
+      'token',
+      SpreadsheetID,
+      new Date('2026-06-15'),
+    );
 
     expect(result).toBe(false);
     expect(spy).not.toHaveBeenCalled();
@@ -263,7 +275,11 @@ describe('isHoliday', () => {
 
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const result = await isHoliday('token', new Date('2026-06-15'));
+    const result = await isHoliday(
+      'token',
+      SpreadsheetID,
+      new Date('2026-06-15'),
+    );
 
     expect(result).toBe(false);
     expect(spy).not.toHaveBeenCalled();
@@ -307,7 +323,11 @@ describe('isHoliday', () => {
 
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const result = await isHoliday('token', new Date('2026-06-15'));
+    const result = await isHoliday(
+      'token',
+      SpreadsheetID,
+      new Date('2026-06-15'),
+    );
 
     expect(result).toBe(true);
     expect(spy).not.toHaveBeenCalled();

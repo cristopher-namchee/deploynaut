@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { Schedules } from '@/const';
 import { getGoogleAuthToken, getSchedule, isHoliday } from '@/lib/google';
 import type { Env } from '@/types';
 
@@ -22,8 +23,8 @@ export async function GET(c: Context<{ Bindings: Env }>) {
   }
 
   const [schedule, holiday] = await Promise.all([
-    getSchedule(token, new Date(date)),
-    isHoliday(token, new Date(date)),
+    getSchedule(token, Schedules.glchat.sheet_id, new Date(date)),
+    isHoliday(token, Schedules.glchat.sheet_id, new Date(date)),
   ]);
   if (!schedule) {
     return c.json({ message: 'Internal server error' }, 500);
