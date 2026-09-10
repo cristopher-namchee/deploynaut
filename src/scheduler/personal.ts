@@ -1,4 +1,3 @@
-import { Schedules } from '@/const';
 import { formatDate } from '@/lib/date';
 import {
   getGoogleAuthToken,
@@ -8,9 +7,9 @@ import {
   sendEphmermalMessage,
 } from '@/lib/google';
 
-import type { Env } from '@/types';
+import type { Env, Schedule } from '@/types';
 
-export async function sendPICReminder(env: Env, project: keyof typeof Schedules) {
+export async function sendPICReminder(env: Env, project: Schedule) {
   const token = await getGoogleAuthToken(
     env.SERVICE_ACCOUNT_EMAIL,
     env.SERVICE_ACCOUNT_PRIVATE_KEY,
@@ -20,16 +19,14 @@ export async function sendPICReminder(env: Env, project: keyof typeof Schedules)
   }
 
   const today = new Date();
-  const isExcluded = await isHoliday(token, today);
+  const isExcluded = await isHoliday(token, project.sheet_id, today);
   if (isExcluded) {
     console.log('Current day is holiday. Aborting...');
 
     return;
   }
 
-  const metadata = Sche
-
-  const schedule = await getSchedule(token, today);
+  const schedule = await getSchedule(token, project.sheet_id, today);
   if (!schedule) {
     return;
   }
@@ -52,11 +49,7 @@ _Good luck during the deployment!_`;
 
   await Promise.all(
     employees.map(async (pic) => {
-      const userId = await getUserIdByEmail(
-        pic.email,
-        env.DAILY_GOOGLE_SPACE,
-        token,
-      );
+      const userId = await getUserIdByEmail(pic.email, project.space, token);
 
       if (!userId) {
         return;
@@ -64,7 +57,7 @@ _Good luck during the deployment!_`;
 
       await sendEphmermalMessage(
         token,
-        env.DAILY_GOOGLE_SPACE,
+        project.space,
         message.replace('{user}', `<${userId}>`),
         userId,
       );

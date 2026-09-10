@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as lib from '@/lib/google';
 import type { PIC } from '@/types';
 import { sendDeploymentReminder } from './channel';
+import { Schedules } from '@/const';
 
 describe('sendDeploymentReminder', () => {
   afterEach(() => {
@@ -14,11 +15,13 @@ describe('sendDeploymentReminder', () => {
       .mockResolvedValueOnce('');
     const holidaySpy = vi.spyOn(lib, 'isHoliday');
 
-    await sendDeploymentReminder({
-      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
-      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
-      DAILY_GOOGLE_SPACE: 'space',
-    });
+    await sendDeploymentReminder(
+      {
+        SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+        SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      },
+      Schedules.glchat,
+    );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -36,11 +39,13 @@ describe('sendDeploymentReminder', () => {
       .spyOn(console, 'log')
       .mockImplementationOnce(() => {});
 
-    await sendDeploymentReminder({
-      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
-      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
-      DAILY_GOOGLE_SPACE: 'space',
-    });
+    await sendDeploymentReminder(
+      {
+        SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+        SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      },
+      Schedules.glchat,
+    );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -62,11 +67,13 @@ describe('sendDeploymentReminder', () => {
     const userResolverSpy = vi.spyOn(lib, 'getUserIdByEmail');
     const sendSpy = vi.spyOn(lib, 'sendMessage').mockResolvedValueOnce(false);
 
-    await sendDeploymentReminder({
-      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
-      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
-      DAILY_GOOGLE_SPACE: 'space',
-    });
+    await sendDeploymentReminder(
+      {
+        SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+        SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      },
+      Schedules.glchat,
+    );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -102,11 +109,13 @@ describe('sendDeploymentReminder', () => {
 
     const sendSpy = vi.spyOn(lib, 'sendMessage').mockResolvedValueOnce(true);
 
-    await sendDeploymentReminder({
-      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
-      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
-      DAILY_GOOGLE_SPACE: 'space',
-    });
+    await sendDeploymentReminder(
+      {
+        SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+        SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      },
+      Schedules.glchat,
+    );
 
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
     expect(userResolverSpy).toHaveBeenCalledTimes(4);
@@ -147,11 +156,13 @@ describe('sendDeploymentReminder', () => {
 
     const sendSpy = vi.spyOn(lib, 'sendMessage').mockResolvedValueOnce(true);
 
-    await sendDeploymentReminder({
-      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
-      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
-      DAILY_GOOGLE_SPACE: 'space',
-    });
+    await sendDeploymentReminder(
+      {
+        SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+        SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      },
+      Schedules.glchat,
+    );
 
     // the empty Infra slot resolves nobody
     expect(userResolverSpy).toHaveBeenCalledTimes(4);
@@ -187,11 +198,13 @@ describe('sendDeploymentReminder', () => {
       .spyOn(console, 'error')
       .mockImplementationOnce(() => {});
 
-    await sendDeploymentReminder({
-      SERVICE_ACCOUNT_EMAIL: 'EMAIL',
-      SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
-      DAILY_GOOGLE_SPACE: 'space',
-    });
+    await sendDeploymentReminder(
+      {
+        SERVICE_ACCOUNT_EMAIL: 'EMAIL',
+        SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
+      },
+      Schedules.glchat,
+    );
 
     const sentMessage = sendSpy.mock.calls[0][2];
     expect(sentMessage).toContain('PM: <users/pm_123>');

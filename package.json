@@ -7,7 +7,7 @@
 		"deploy": "wrangler deploy --minify",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
 		"lint": "biome lint ./src",
-		"format": "biome format ./src",
+		"format": "biome format --write ./src",
 		"test": "vitest"
 	},
 	"dependencies": {

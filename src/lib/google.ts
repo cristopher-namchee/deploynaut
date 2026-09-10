@@ -1,4 +1,4 @@
-import { HolidayBackgrounds, JWT, SpreadsheetID } from '@/const';
+import { HolidayBackgrounds, JWT } from '@/const';
 import type { Employee, PIC } from '@/types';
 import { formatDate } from './date';
 
@@ -200,9 +200,9 @@ function rgbToHex(rgb: GoogleRgbColor) {
   return `#${r}${g}${b}`.toUpperCase();
 }
 
-async function getRowByDate(token: string, date: Date) {
+async function getRowByDate(token: string, spreadsheetId: string, date: Date) {
   const range = `A7:A`;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/${range}?valueRenderOption=FORMATTED_VALUE`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?valueRenderOption=FORMATTED_VALUE`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -243,9 +243,13 @@ async function getRowByDate(token: string, date: Date) {
  * @returns {Promise<boolean>} A promise that resolves into a boolean. `true` if there's no deployment
  * in that date. `false` otherwise.
  */
-export async function isHoliday(token: string, date: Date): Promise<boolean> {
+export async function isHoliday(
+  token: string,
+  spreadsheetId: string,
+  date: Date,
+): Promise<boolean> {
   try {
-    const targetRow = await getRowByDate(token, date);
+    const targetRow = await getRowByDate(token, spreadsheetId, date);
     // assume that it's not holiday if failed.
     if (targetRow === -1) {
       return false;
@@ -254,7 +258,7 @@ export async function isHoliday(token: string, date: Date): Promise<boolean> {
     const cellCoordinate = `${columnToLetter(10)}${targetRow}`;
 
     const url = new URL(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
     );
     url.searchParams.append('ranges', cellCoordinate);
     url.searchParams.append('includeGridData', 'true');
@@ -309,7 +313,7 @@ export async function getSchedule(
   date: Date,
 ): Promise<PIC | null> {
   try {
-    const targetRow = await getRowByDate(token, date);
+    const targetRow = await getRowByDate(token, spreadsheetId, date);
     if (targetRow === -1) {
       return null;
     }
@@ -479,7 +483,7 @@ export async function sendMessage(
  * @param {string} channel Google Space channel ID to send the message
  * @param {string} message Actual content of the the message, formatted
  * using Google rules.
- * @param {string} user User ID as target for the ephermal message.
+ * @param {string} user User ID as target for the ephemeral message.
  * @returns A Promise that resolves to status of the request.
  */
 export async function sendEphmermalMessage(
@@ -513,7 +517,7 @@ export async function sendEphmermalMessage(
     return response.ok;
   } catch (err) {
     console.error(
-      `Failed to send message ephermal to '${user} in channel '${channel}':`,
+      `Failed to send ephemeral message to '${user} in channel '${channel}':`,
       err,
     );
 
