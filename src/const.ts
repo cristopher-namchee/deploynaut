@@ -15,7 +15,7 @@ export const Schedules = {
   glchat: {
     sheet_id: '18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo',
     app_name: 'GLChat',
-    space: 'AAQAPaXqGE8',
+    space: 'AAQA-yhQs0Y',
     commits: 'https://github.com/GDP-ADMIN/glchat/commits/main/',
     exec: {
       reminder: '05:00',
