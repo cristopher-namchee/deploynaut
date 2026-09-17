@@ -10,7 +10,12 @@ import {
   it,
   vi,
 } from 'vitest';
-import { getGoogleAuthToken, getUserIdByEmail, isHoliday } from '@/lib/google';
+import {
+  getGoogleAuthToken,
+  getSchedule,
+  getUserIdByEmail,
+  isHoliday,
+} from '@/lib/google';
 
 const mockServer = setupServer();
 const SpreadsheetID = 'sample_sheet';
@@ -331,6 +336,136 @@ describe('isHoliday', () => {
 
     expect(result).toBe(true);
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('getSchedule', () => {
+  beforeAll(() => {
+    mockServer.listen();
+  });
+
+  afterEach(() => {
+    mockServer.resetHandlers();
+    vi.resetAllMocks();
+  });
+
+  afterAll(() => {
+    mockServer.close();
+  });
+
+  it('should read names and emails from person chips with and without trailing text runs', async () => {
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/A7:A`,
+        () =>
+          HttpResponse.json({ values: [['Monday, June 15, 2026']] }),
+      ),
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+        () =>
+          HttpResponse.json({
+            sheets: [
+              {
+                data: [
+                  {
+                    rowData: [
+                      {
+                        values: [
+                          {},
+                          {
+                            formattedValue: 'Muhammad Najmi Briliant',
+                            chipRuns: [
+                              {
+                                chip: {
+                                  personProperties: {
+                                    email: 'muhammad.n.briliant@gdplabs.id',
+                                  },
+                                },
+                              },
+                              { startIndex: 23 },
+                            ],
+                          },
+                          {
+                            formattedValue: 'Christian Trisno Sen Long Chen',
+                            chipRuns: [
+                              {
+                                chip: {
+                                  personProperties: {
+                                    email: 'christian.t.s.l.chen@gdplabs.id',
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                          {
+                            formattedValue: 'Bryant Plaudo Santoso',
+                            chipRuns: [
+                              {
+                                chip: {
+                                  personProperties: {
+                                    email: 'bryant.p.santoso@gdplabs.id',
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                          {
+                            formattedValue: 'Irma Naomi Irene Tampubolon',
+                            chipRuns: [
+                              {
+                                chip: {
+                                  personProperties: {
+                                    email: 'irma.n.i.tampubolon@gdplabs.id',
+                                  },
+                                },
+                              },
+                              { startIndex: 27 },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          }),
+      ),
+    );
+
+    const result = await getSchedule(
+      'token',
+      SpreadsheetID,
+      new Date('2026-06-15'),
+    );
+
+    expect(result).toEqual([
+      [],
+      [
+        {
+          name: 'Muhammad Najmi Briliant',
+          email: 'muhammad.n.briliant@gdplabs.id',
+        },
+      ],
+      [
+        {
+          name: 'Christian Trisno Sen Long Chen',
+          email: 'christian.t.s.l.chen@gdplabs.id',
+        },
+      ],
+      [
+        {
+          name: 'Bryant Plaudo Santoso',
+          email: 'bryant.p.santoso@gdplabs.id',
+        },
+      ],
+      [
+        {
+          name: 'Irma Naomi Irene Tampubolon',
+          email: 'irma.n.i.tampubolon@gdplabs.id',
+        },
+      ],
+    ]);
   });
 });
 
