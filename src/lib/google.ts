@@ -350,23 +350,30 @@ export async function getSchedule(
         const cells = cell.values;
 
         cells?.forEach((cell) => {
-          const actualValue = cell.formattedValue;
-          const arr: { name: string; email: string }[] = [];
+          const actualValue = cell.formattedValue ?? '';
+          const arr: Employee[] = [];
 
           let lastIdx = 0;
-          let mail: string;
+          let mail: string | undefined;
 
           cell.chipRuns?.forEach((cr) => {
             if (cr.chip) {
-              mail = cr.chip?.personProperties?.email as string;
-            } else if (cr.startIndex) {
-              const name = actualValue?.slice(lastIdx, cr.startIndex) as string;
-              lastIdx = cr.startIndex;
+              mail = cr.chip.personProperties?.email;
+            } else if (cr.startIndex !== undefined) {
+              if (mail) {
+                const name = actualValue.slice(lastIdx, cr.startIndex);
+                arr.push({ name, email: mail });
+              }
 
-              arr.push({ name, email: mail });
-              mail = '';
+              lastIdx = cr.startIndex;
+              mail = undefined;
             }
           });
+
+          // A final chip may have no following text run marking its end.
+          if (mail) {
+            arr.push({ name: actualValue.slice(lastIdx), email: mail });
+          }
 
           pics.push(arr);
         });
