@@ -467,6 +467,146 @@ describe('getSchedule', () => {
       ],
     ]);
   });
+
+  it('should split adjacent chips that have no whitespace between them', async () => {
+    mockServer.use(
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}/values/A7:A`,
+        () => HttpResponse.json({ values: [['Monday, June 15, 2026']] }),
+      ),
+      http.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SpreadsheetID}`,
+        () =>
+          HttpResponse.json({
+            sheets: [
+              {
+                data: [
+                  {
+                    rowData: [
+                      {
+                        values: [
+                          {},
+                          {
+                            // Two person chips glued together: run 1 starts at 0
+                            // (omitted by the API) and run 2 starts right where
+                            // run 1 ends, so there is no chip-less run in between.
+                            formattedValue:
+                              'Muhammad Najmi BriliantChristian T',
+                            chipRuns: [
+                              {
+                                chip: {
+                                  personProperties: {
+                                    email: 'muhammad.n.briliant@gdplabs.id',
+                                  },
+                                },
+                              },
+                              {
+                                startIndex: 23,
+                                chip: {
+                                  personProperties: {
+                                    email: 'christian.t.s.l.chen@gdplabs.id',
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                          {
+                            // Chips separated by a whitespace-only run.
+                            formattedValue: 'Bryant Plaudo Santoso Irma',
+                            chipRuns: [
+                              {
+                                chip: {
+                                  personProperties: {
+                                    email: 'bryant.p.santoso@gdplabs.id',
+                                  },
+                                },
+                              },
+                              { startIndex: 21 },
+                              {
+                                startIndex: 22,
+                                chip: {
+                                  personProperties: {
+                                    email: 'irma.n.i.tampubolon@gdplabs.id',
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                          {
+                            // Chip glued to a trailing two-chip pair, with the
+                            // cell ending on a chip-less run.
+                            formattedValue: 'Bryant Plaudo SantosoIrma ',
+                            chipRuns: [
+                              {
+                                chip: {
+                                  personProperties: {
+                                    email: 'bryant.p.santoso@gdplabs.id',
+                                  },
+                                },
+                              },
+                              {
+                                startIndex: 21,
+                                chip: {
+                                  personProperties: {
+                                    email: 'irma.n.i.tampubolon@gdplabs.id',
+                                  },
+                                },
+                              },
+                              { startIndex: 25 },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          }),
+      ),
+    );
+
+    const result = await getSchedule(
+      'token',
+      SpreadsheetID,
+      new Date('2026-06-15'),
+    );
+
+    expect(result).toEqual([
+      [],
+      [
+        {
+          name: 'Muhammad Najmi Briliant',
+          email: 'muhammad.n.briliant@gdplabs.id',
+        },
+        {
+          name: 'Christian T',
+          email: 'christian.t.s.l.chen@gdplabs.id',
+        },
+      ],
+      [
+        {
+          name: 'Bryant Plaudo Santoso',
+          email: 'bryant.p.santoso@gdplabs.id',
+        },
+        {
+          name: 'Irma',
+          email: 'irma.n.i.tampubolon@gdplabs.id',
+        },
+      ],
+      [
+        {
+          name: 'Bryant Plaudo Santoso',
+          email: 'bryant.p.santoso@gdplabs.id',
+        },
+        {
+          name: 'Irma',
+          email: 'irma.n.i.tampubolon@gdplabs.id',
+        },
+      ],
+      [],
+    ]);
+  });
 });
 
 describe('getUserIdByEmail', () => {
