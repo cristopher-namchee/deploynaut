@@ -357,9 +357,7 @@ export async function getSchedule(
           let mail: string | undefined;
 
           cell.chipRuns?.forEach((cr) => {
-            if (cr.chip) {
-              mail = cr.chip.personProperties?.email;
-            } else if (cr.startIndex !== undefined) {
+            if (cr.startIndex !== undefined) {
               if (mail) {
                 const name = actualValue.slice(lastIdx, cr.startIndex);
                 arr.push({ name, email: mail });
@@ -367,6 +365,10 @@ export async function getSchedule(
 
               lastIdx = cr.startIndex;
               mail = undefined;
+            }
+
+            if (cr.chip) {
+              mail = cr.chip.personProperties?.email;
             }
           });
 
