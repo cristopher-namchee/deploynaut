@@ -1,4 +1,3 @@
-import { fetch } from './api/app';
 import { Schedules } from './const';
 import { sendDeploymentReminder } from './scheduler/channel';
 import { sendPICReminder } from './scheduler/personal';
@@ -14,7 +13,6 @@ const schedules: Record<
 };
 
 export default {
-  fetch,
   scheduled: async (
     ctrl: ScheduledController,
     env: Env,

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Schedules } from '@/const';
 import * as lib from '@/lib/google';
 import type { PIC } from '@/types';
 import { sendDeploymentReminder } from './channel';
-import { Schedules } from '@/const';
 
 describe('sendDeploymentReminder', () => {
   afterEach(() => {
@@ -20,7 +20,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -44,7 +44,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -72,7 +72,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -114,7 +114,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
@@ -161,7 +161,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     // the empty Infra slot resolves nobody
@@ -203,7 +203,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     const sentMessage = sendSpy.mock.calls[0][2];

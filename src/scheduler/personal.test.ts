@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Schedules } from '@/const';
 import * as lib from '@/lib/google';
 import type { PIC } from '@/types';
 import { sendPICReminder } from './personal';
-import { Schedules } from '@/const';
 
 describe('sendDeploymentReminder', () => {
   afterEach(() => {
@@ -20,7 +20,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -44,7 +44,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -71,7 +71,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledOnce();
@@ -119,11 +119,15 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(tokenSpy).toHaveBeenCalledWith('EMAIL', 'PK');
-    expect(scheduleSpy).toHaveBeenCalledWith('mock-token', expect.any(String), expect.any(Date));
+    expect(scheduleSpy).toHaveBeenCalledWith(
+      'mock-token',
+      expect.any(String),
+      expect.any(Date),
+    );
 
     expect(userResolverSpy).toHaveBeenCalledTimes(3);
     expect(userResolverSpy).toHaveBeenCalledWith(
@@ -197,7 +201,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(userResolverSpy).toHaveBeenCalledTimes(3);
@@ -259,7 +263,7 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(sendMsgSpy).toHaveBeenCalledTimes(2);
@@ -289,12 +293,12 @@ describe('sendDeploymentReminder', () => {
         SERVICE_ACCOUNT_EMAIL: 'EMAIL',
         SERVICE_ACCOUNT_PRIVATE_KEY: 'PK',
       },
-      Schedules.glchat,
+      Schedules.aip,
     );
 
     expect(consoleErrorSpy).toHaveBeenCalled();
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to send ephemeral message"),
+      expect.stringContaining('Failed to send ephemeral message'),
       expect.any(Error),
     );
   });
