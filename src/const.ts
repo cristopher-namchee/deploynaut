@@ -12,16 +12,6 @@ export const JWT = {
 export const HolidayBackgrounds = ['#f4cccc', '#ea9999', '#ff0000'];
 
 export const Schedules = {
-  glchat: {
-    sheet_id: '18R2eiVJ_l1PVXNYMNCtYiWR5M-taYdMgLVIMzx9mDIo',
-    app_name: 'GLChat',
-    space: 'AAQA-yhQs0Y',
-    commits: 'https://github.com/GDP-ADMIN/glchat/commits/main/',
-    exec: {
-      reminder: '05:00',
-      deployment: '08:30',
-    },
-  },
   aip: {
     sheet_id: '1niwmbC9_DEV7-objT316vST-NQxgaulh3Vs8fnug7wQ',
     app_name: 'GL AIP',
